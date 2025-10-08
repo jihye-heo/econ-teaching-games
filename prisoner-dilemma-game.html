@@ -32,7 +32,7 @@
         const database = firebase.database();
 
         const PrisonersDilemmaGame = () => {
-    // Guard against processing the same results multiple times
+            // Guard against processing the same results multiple times
             const resultsProcessingRef = React.useRef(false);
             const [mode, setMode] = useState(null);
             const [gameState, setGameState] = useState('setup');
@@ -52,12 +52,17 @@
             const [copied, setCopied] = useState(false);
             const [roomRef, setRoomRef] = useState(null);
 
+            // canonical payoff matrix (same values as before)
             const payoffMatrix = {
-                'cooperate-cooperate': { player: 3, opponent: 3, desc: 'Both cooperate - mutual benefit' },
-                'cooperate-defect': { player: 0, opponent: 5, desc: 'You cooperated, opponent defected' },
-                'defect-cooperate': { player: 5, opponent: 0, desc: 'You defected, opponent cooperated' },
-                'defect-defect': { player: 1, opponent: 1, desc: 'Both defected - punishment' }
+              'cooperate-cooperate': { player: 3, opponent: 3, desc: 'Both cooperate - mutual benefit' },
+              'cooperate-defect':    { player: 0, opponent: 5, desc: 'You cooperated, opponent defected' },
+              'defect-cooperate':    { player: 5, opponent: 0, desc: 'You defected, opponent cooperated' },
+              'defect-defect':       { player: 1, opponent: 1, desc: 'Both defected - punishment' }
             };
+            
+            // default fallback (in case some scope didn't define payoffMatrix)
+            const defaultPayoffMatrix = payoffMatrix;
+
 
             // AI Mode Functions
             const getAIChoice = () => {
@@ -237,17 +242,85 @@
               // Other room states handled by your existing UI logic
             };
 
-
+            
+            // ---- safer calculateMultiplayerResults ----
             const calculateMultiplayerResults = (myMove, oppMove) => {
-                if (gameState === 'result') return;
-                
-                console.log('calculateMultiplayerResults called:', { 
-                    myMove, 
-                    oppMove, 
-                    playerRole,
-                    currentMyChoice: myChoice,
-                    currentOppChoice: opponentChoice 
+              if (gameState === 'result') return;
+            
+              // Immediately reflect opponent's choice in UI for responsiveness
+              setOpponentChoice(oppMove);
+            
+              // If we need to show result text / description, we can compute locally for display
+              const pm = (typeof payoffMatrix !== 'undefined' && payoffMatrix) ? payoffMatrix : defaultPayoffMatrix;
+              const key = `${myMove}-${oppMove}`;
+              const resultLocal = pm[key] || { player: 0, opponent: 0 };
+            
+              // Show UI that results are being computed / displayed locally
+              setGameState('result');
+            
+              // However — do NOT update authoritative scores locally. Instead, host will compute & publish.
+              // If this client is host, ask Firebase snapshot and compute+publish from authoritative snapshot
+              if (playerRole === 'host') {
+                // read authoritative snapshot and compute using computeAndPublishResultsToFirebase
+                roomRef.once('value').then(snapshot => {
+                  const data = snapshot.val();
+                  // additional safety: ensure choices still match (they may have changed)
+                  if (data && data.host && data.guest && data.host.choice && data.guest.choice) {
+                    computeAndPublishResultsToFirebase(data);
+                  } else {
+                    // if snapshot doesn't have both choices, fall back to a local display only
+                    // (no DB write)
+                  }
+                }).catch(err => {
+                  console.error('Error reading snapshot before computing results:', err);
                 });
+              } else {
+                // Guest: wait for authoritative 'results' published to Firebase (handled in updateGameFromFirebase)
+              }
+            };
+
+            // ---- host-only: compute & publish authoritative results ----
+            const computeAndPublishResultsToFirebase = async (data) => {
+              if (!roomRef || !data) return;
+              if (playerRole !== 'host') return; // only host may write authoritative results
+            
+              // Prevent re-entrancy / duplicate writes
+              if (resultsProcessingRef.current) return;
+              resultsProcessingRef.current = true;
+            
+              try {
+                const hostChoice = data.host?.choice;
+                const guestChoice = data.guest?.choice;
+                const currentHostScore = Number(data.host?.score ?? 0);
+                const currentGuestScore = Number(data.guest?.score ?? 0);
+            
+                const pm = (typeof payoffMatrix !== 'undefined' && payoffMatrix) ? payoffMatrix : defaultPayoffMatrix;
+                const key = `${hostChoice}-${guestChoice}`;
+                const result = pm[key] || { player: 0, opponent: 0 };
+            
+                const newHostScore = currentHostScore + Number(result.player || 0);
+                const newGuestScore = currentGuestScore + Number(result.opponent || 0);
+            
+                // Atomically publish results and set phase to 'results'
+                await roomRef.update({
+                  'host/score': newHostScore,
+                  'guest/score': newGuestScore,
+                  roundPhase: 'results'
+                });
+            
+                // Update authoritative local UI state from the values we wrote
+                setMyChoice(hostChoice);
+                setOpponentChoice(guestChoice);
+                setMyScore(newHostScore);
+                setOpponentScore(newGuestScore);
+                setGameState('result');
+              } catch (err) {
+                console.error('Error publishing results to Firebase:', err);
+              } finally {
+                resultsProcessingRef.current = false;
+              }
+            };
+
                 
                 const key = `${myMove}-${oppMove}`;
                 const result = payoffMatrix[key];
@@ -268,20 +341,45 @@
                 }
             };
 
+            // ---- Host-advance to next round (atomically reset choices & roundPhase) ----
             const nextRound = async () => {
-                if (mode === 'ai') {
-                    // AI mode - simple increment
-                    setMyChoice(null);
-                    setOpponentChoice(null);
-                    setRound(prev => prev + 1);
-                    setGameState('playing');
-                } else if (mode === 'multiplayer') {
-                    // Multiplayer mode - mark ready and wait
-                    const readyField = playerRole === 'host' ? 'hostReadyForNext' : 'guestReadyForNext';
-                    await roomRef.update({ [readyField]: true });
-                    setGameState('waitingForNext');
+              // For AI or single-player mode you can keep your existing logic
+              if (mode === 'ai') {
+                // existing AI next-round handling (unchanged)
+                // example (keep your original code here if needed)
+                setMyChoice(null);
+                setOpponentChoice(null);
+                setRound(prev => prev + 1);
+                setGameState('playing');
+                return;
+              }
+            
+              // Multiplayer: only the host should reset the round state in Firebase
+              if (mode === 'multiplayer') {
+                if (playerRole !== 'host') {
+                  // Non-hosts simply wait for the host to advance the round
+                  return;
                 }
+                try {
+                  const newRound = (typeof round === 'number') ? round + 1 : 1;
+                  await roomRef.update({
+                    round: newRound,
+                    roundPhase: 'choosing',
+                    'host/choice': null,
+                    'host/ready': false,
+                    'guest/choice': null,
+                    'guest/ready': false
+                  });
+                  // Local UI reset
+                  setGameState('choosing');
+                  setMyChoice(null);
+                  setOpponentChoice(null);
+                } catch (err) {
+                  console.error('Error advancing to next round:', err);
+                }
+              }
             };
+
 
             // Host's main listener for guest joining and game updates
             useEffect(() => {
