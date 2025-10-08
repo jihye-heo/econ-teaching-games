@@ -32,6 +32,8 @@
         const database = firebase.database();
 
         const PrisonersDilemmaGame = () => {
+    // Guard against processing the same results multiple times
+            const resultsProcessingRef = React.useRef(false);
             const [mode, setMode] = useState(null);
             const [gameState, setGameState] = useState('setup');
             const [playerName, setPlayerName] = useState('');
@@ -195,17 +197,46 @@
                 await roomRef.child(playerPath).update({ choice: choice, ready: true });
             };
 
+            // ---- authoritative updateGameFromFirebase (host computes, guest waits) ----
             const updateGameFromFirebase = (data) => {
+              // Defensive: nothing to do if no data
+              if (!data) return;
+            
+              // If the room has moved to 'results', read authoritative values and render results UI
+              if (data.roundPhase === 'results') {
                 if (playerRole === 'host') {
-                    if (data.host.ready && data.guest.ready) {
-                        calculateMultiplayerResults(data.host.choice, data.guest.choice);
-                    }
+                  setMyChoice(data.host?.choice ?? null);
+                  setOpponentChoice(data.guest?.choice ?? null);
+                  setMyScore(Number(data.host?.score ?? 0));
+                  setOpponentScore(Number(data.guest?.score ?? 0));
                 } else {
-                    if (data.host.ready && data.guest.ready) {
-                        calculateMultiplayerResults(data.guest.choice, data.host.choice);
-                    }
+                  setMyChoice(data.guest?.choice ?? null);
+                  setOpponentChoice(data.host?.choice ?? null);
+                  setMyScore(Number(data.guest?.score ?? 0));
+                  setOpponentScore(Number(data.host?.score ?? 0));
                 }
+                setGameState('result');
+                return;
+              }
+            
+              // If we are still choosing, and both choices are present, host must compute & publish.
+              if (data.roundPhase === 'choosing' &&
+                  data.host && data.guest &&
+                  data.host.choice && data.guest.choice) {
+            
+                if (playerRole === 'host') {
+                  // Host computes and publishes authoritative results
+                  computeAndPublishResultsToFirebase(data);
+                } else {
+                  // Guest: optionally show the opponent's tentative choice and wait for authoritative results
+                  setOpponentChoice(data.host?.choice ?? null);
+                  setGameState('waitingForResults');
+                }
+              }
+            
+              // Other room states handled by your existing UI logic
             };
+
 
             const calculateMultiplayerResults = (myMove, oppMove) => {
                 if (gameState === 'result') return;
