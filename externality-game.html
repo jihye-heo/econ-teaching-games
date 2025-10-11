@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Externality Economics Game</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-app-compat.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-database-compat.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.1/tailwindcss.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDt0_WzG8o2pecbuYTKRxGI3GDye7k9USg",
+      authDomain: "externality-game.firebaseapp.com",
+      databaseURL: "https://externality-game-default-rtdb.firebaseio.com",
+      projectId: "externality-game",
+      storageBucket: "externality-game.firebasestorage.app",
+      messagingSenderId: "230260835239",
+      appId: "1:230260835239:web:9cacc7579eacd0a5a62c82"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Game constants
+    const PROFIT_PER_UNIT = 10;
+    const EXTERNAL_COST_PER_UNIT = 0.5;
+    const BASE_BILL = 50;
+    const TOTAL_ROUNDS = 3;
+
+    // State
+    let state = {
+      view: 'home',
+      roomCode: '',
+      playerName: '',
+      playerId: '',
+      currentRoom: null,
+      isInstructor: false,
+      production: 50
+    };
+
+    // Render
+    function render() {
+      const root = document.getElementById('root');
+      
+      if (state.view === 'home') {
+        root.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4">
+            <div class="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-8">
+              <div class="text-center mb-8">
+                <div class="text-6xl mb-4">⚡</div>
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">Externality Economics</h1>
+                <p class="text-gray-600">Interactive datacenter simulation</p>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="goToInstructor()" class="bg-indigo-600 hover:bg-indigo-700 text-white p-6 rounded-xl">
+                  <div class="text-4xl mb-2">👨‍🏫</div>
+                  <div class="font-bold text-lg">Instructor</div>
+                </button>
+                <button onclick="goToStudent()" class="bg-green-600 hover:bg-green-700 text-white p-6 rounded-xl">
+                  <div class="text-4xl mb-2">🎮</div>
+                  <div class="font-bold text-lg">Student</div>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (state.view === 'instructor') {
+        root.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 p-4">
+            <div class="max-w-4xl mx-auto">
+              <button onclick="goHome()" class="mb-4 text-white hover:text-blue-200">← Back</button>
+              <div class="bg-white rounded-2xl shadow-2xl p-8">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Instructor Dashboard</h2>
+                <button onclick="createRoom()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold mb-6">
+                  + Create New Room
+                </button>
+                <div id="rooms-list" class="space-y-4">
+                  <p class="text-gray-500">Loading rooms...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        loadRooms();
+      } else if (state.view === 'student') {
+        root.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4">
+            <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+              <button onclick="goHome()" class="mb-4 text-gray-600 hover:text-gray-800">← Back</button>
+              <h2 class="text-3xl font-bold text-gray-800 mb-6">Join Game</h2>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+                  <input id="input-name" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Enter your name">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Room Code</label>
+                  <input id="input-room" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Enter room code">
+                </div>
+                <button onclick="joinRoom()" class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold">
+                  Join Room
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (state.view === 'lobby') {
+        const players = state.currentRoom.players || {};
+        const playerList = Object.values(players);
+        root.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4">
+            <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
+              <div class="text-6xl mb-4 animate-pulse">⚡</div>
+              <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome, ${state.playerName}!</h2>
+              <p class="text-gray-600 mb-6">Waiting for instructor...</p>
+              <div class="bg-indigo-50 rounded-lg p-4 mb-6">
+                <div class="text-sm text-gray-600 mb-2">Room Code</div>
+                <div class="text-3xl font-bold text-indigo-600">${state.currentRoom.code}</div>
+              </div>
+              <div class="text-left bg-gray-50 rounded-lg p-4">
+                <div class="text-sm font-medium text-gray-700 mb-2">Players (${playerList.length}):</div>
+                <ul class="space-y-1">
+                  ${playerList.map(p => `<li class="text-sm text-gray-600">• ${p.name} ${p.name === state.playerName ? '(you)' : ''}</li>`).join('')}
+                </ul>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (state.view === 'tutorial') {
+        root.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 flex items-center justify-center p-4">
+            <div class="max-w-3xl w-full bg-white rounded-2xl shadow-2xl p-8">
+              <div class="text-center mb-6">
+                <div class="text-6xl mb-4">🏢⚡</div>
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">Welcome to the AI Datacenter Game</h1>
+                <p class="text-lg text-gray-600">Understanding Negative Externalities Through Competition</p>
+              </div>
+
+              <div class="space-y-6 text-gray-700">
+                <div class="bg-blue-50 rounded-lg p-6 border-l-4 border-blue-500">
+                  <h2 class="font-bold text-xl text-blue-900 mb-3">🌍 The Scenario</h2>
+                  <p>AI companies are building massive datacenters that use huge amounts of electricity. The cost of this electricity consumption is spread across neighborhoods, affecting everyone. This is a negative externality - when your actions impose costs on others.</p>
+                </div>
+
+                <div class="bg-green-50 rounded-lg p-6 border-l-4 border-green-500">
+                  <h2 class="font-bold text-xl text-green-900 mb-3">🎮 Your Role</h2>
+                  <p>You are each a datacenter operator producing AI services for customers. If you produce more, you earn more profit - but you also use more electricity, which increases costs for everyone (including yourself!).</p>
+                </div>
+
+                <div class="bg-red-50 rounded-lg p-6 border-l-4 border-red-500">
+                  <h2 class="font-bold text-xl text-red-900 mb-3">💀 Elimination Rules</h2>
+                  <p class="mb-2">This is a competition for survival. After each round, the datacenter with the lowest profit will be eliminated from the market.</p>
+                  <ul class="ml-4 space-y-1">
+                    <li>• Round 1: Last place eliminated</li>
+                    <li>• Round 2: Last place eliminated again</li>
+                    <li>• Round 3: Final round - Winner takes all! 🏆</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="mt-8 text-center">
+                <p class="text-gray-500">Waiting for instructor to start Round 1...</p>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (state.view === 'gameplay') {
+        if (!state.currentRoom) {
+          root.innerHTML = '<div class="min-h-screen bg-gray-900 text-white flex items-center justify-center"><h1 class="text-3xl">Loading...</h1></div>';
+          return;
+        }
+        
+        const players = state.currentRoom.players || {};
+        const myPlayer = players[state.playerId];
+        
+        // Check if eliminated
+        if (myPlayer && myPlayer.isEliminated) {
+          root.innerHTML = `
+            <div class="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900 flex items-center justify-center p-4">
+              <div class="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
+                <div class="text-6xl mb-4">💼</div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">You have been eliminated!</h2>
+                <p class="text-xl text-gray-600 mb-6">You fell behind and are no longer a viable competitor...</p>
+                <div class="bg-gray-50 rounded-lg p-6">
+                  <p class="text-gray-700">Waiting for Round ${state.currentRoom.currentRound} to complete...</p>
+                </div>
+              </div>
+            </div>
+          `;
+          return;
+        }
+        
+        // Calculate current state
+        const activePlayers = Object.values(players).filter(p => !p.isEliminated);
+        const totalProduction = activePlayers.reduce((sum, p) => {
+          if (p.id === state.playerId) return sum + state.production;
+          return sum + p.production;
+        }, 0);
+        const householdBill = BASE_BILL + (totalProduction * EXTERNAL_COST_PER_UNIT);
+        const grossProfit = state.production * PROFIT_PER_UNIT;
+        const netGain = grossProfit - householdBill;
+        
+        const sentiment = householdBill < 70 ? { emoji: '😊', color: 'text-green-500', text: 'Happy' } :
+                          householdBill < 100 ? { emoji: '😐', color: 'text-yellow-500', text: 'Concerned' } :
+                          householdBill < 150 ? { emoji: '😟', color: 'text-orange-500', text: 'Worried' } :
+                          { emoji: '😡', color: 'text-red-500', text: 'Angry' };
+        
+        root.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4">
+            <div class="max-w-6xl mx-auto">
+              <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <span class="text-sm text-gray-600">Room: ${state.currentRoom.code}</span>
+                    <span class="ml-4 font-bold text-lg">Round ${state.currentRoom.currentRound}/${TOTAL_ROUNDS}</span>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-sm text-gray-600">Total Production</div>
+                    <div class="text-2xl font-bold text-indigo-600">${totalProduction} units</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                  <div class="flex items-center mb-4">
+                    <div class="text-2xl mr-2">⚡</div>
+                    <h3 class="text-xl font-bold">Your Datacenter</h3>
+                  </div>
+
+                  <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Production Level: <span id="prod-display">${state.production}</span> units
+                    </label>
+                    <input id="production-slider" type="range" min="0" max="100" value="${state.production}"
+                      oninput="updateProductionDisplay(this.value)" class="w-full" ${myPlayer && myPlayer.submitted ? 'disabled' : ''}>
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                      <span>0</span><span>50</span><span>100</span>
+                    </div>
+                  </div>
+
+                  <div class="space-y-3 bg-gray-50 rounded-lg p-4 mb-4">
+                    <div class="flex justify-between">
+                      <span class="text-gray-700">Gross Profit:</span>
+                      <span class="font-bold text-green-600" id="gross-profit">${grossProfit}</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-gray-700">Electricity Bill:</span>
+                      <span class="font-bold text-red-600" id="bill">-${householdBill.toFixed(0)}</span>
+                    </div>
+                    <div class="border-t pt-2">
+                      <div class="flex justify-between text-lg">
+                        <span class="font-bold">Net Gain:</span>
+                        <span class="font-bold ${netGain > 0 ? 'text-green-600' : 'text-red-600'}" id="net-gain">
+                          ${netGain.toFixed(0)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button onclick="submitProduction()" ${myPlayer && myPlayer.submitted ? 'disabled' : ''}
+                    class="w-full px-6 py-3 rounded-lg font-semibold ${
+                      myPlayer && myPlayer.submitted ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                    }">
+                    ${myPlayer && myPlayer.submitted ? '✓ Submitted' : 'Submit Choice'}
+                  </button>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center">
+                      <div class="text-2xl mr-2">🏠</div>
+                      <h3 class="text-xl font-bold">Local Households</h3>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-3xl">${sentiment.emoji}</span>
+                      <span class="font-bold ${sentiment.color}">${sentiment.text}</span>
+                    </div>
+                  </div>
+
+                  <div class="flex gap-4 mb-4 justify-center">
+                    <div class="text-4xl">🏠</div>
+                    <div class="text-4xl">🏠</div>
+                    <div class="text-4xl">🏠</div>
+                    <div class="text-4xl">🏠</div>
+                    <div class="text-4xl">🏠</div>
+                  </div>
+
+                  <div class="bg-gray-100 border-l-4 border-blue-400 p-3 mb-2">
+                    <div class="flex justify-between items-center">
+                      <span class="text-sm text-gray-600">Household Bill:</span>
+                      <span class="text-2xl font-bold text-gray-800">${householdBill.toFixed(0)}</span>
+                    </div>
+                  </div>
+
+                  <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3">
+                    <p class="text-sm text-gray-700">
+                      ${householdBill < 70 ? '💬 Electricity costs are manageable.' :
+                        householdBill < 100 ? '💬 Bills are climbing...' :
+                        householdBill < 150 ? '💬 We cannot afford this!' :
+                        '💬 This is impossible!'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Navigation
+    window.goHome = () => { state.view = 'home'; render(); };
+    window.goToInstructor = () => { state.view = 'instructor'; render(); };
+    window.goToStudent = () => { state.view = 'student'; render(); };
+
+    // Create room
+    window.createRoom = async () => {
+      const codes = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT'];
+      const code = codes[Math.floor(Math.random() * codes.length)] + Math.floor(Math.random() * 100);
+      
+      await db.ref(`rooms/${code}`).set({
+        code,
+        players: {},
+        currentRound: 1,
+        gameState: 'lobby'
+      });
+      
+      alert(`Room created! Code: ${code}`);
+      render();
+    };
+
+    // Load rooms
+    function loadRooms() {
+      db.ref('rooms').on('value', (snapshot) => {
+        const data = snapshot.val();
+        const list = document.getElementById('rooms-list');
+        if (!list) return;
+        
+        if (!data) {
+          list.innerHTML = '<p class="text-gray-500">No rooms yet.</p>';
+          return;
+        }
+        
+        list.innerHTML = Object.keys(data).map(code => {
+          const room = data[code];
+          const count = room.players ? Object.keys(room.players).length : 0;
+          const gameState = room.gameState || 'lobby';
+          
+          return `
+            <div class="border rounded-lg p-4 bg-gray-50">
+              <div class="flex justify-between items-center mb-3">
+                <div>
+                  <span class="text-2xl font-bold text-indigo-600">${code}</span>
+                  <span class="ml-4 text-gray-600">${count} students</span>
+                  <span class="ml-4 text-sm text-gray-500">State: ${gameState}</span>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="startTutorial('${code}')" 
+                  ${gameState !== 'lobby' ? 'disabled' : ''}
+                  class="px-4 py-2 rounded ${gameState === 'lobby' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">
+                  Start Tutorial
+                </button>
+                <button onclick="startRound1('${code}')" 
+                  ${gameState !== 'tutorial' ? 'disabled' : ''}
+                  class="px-4 py-2 rounded ${gameState === 'tutorial' ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">
+                  Start Round 1
+                </button>
+                <button onclick="endCurrentRound('${code}')" 
+                  ${gameState !== 'playing' ? 'disabled' : ''}
+                  class="px-4 py-2 rounded ${gameState === 'playing' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">
+                  End Round
+                </button>
+                <button onclick="nextRoundBtn('${code}')" 
+                  ${gameState !== 'roundEnd' ? 'disabled' : ''}
+                  class="px-4 py-2 rounded ${gameState === 'roundEnd' ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}">
+                  Next Round
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      });
+    }
+
+    // Join room
+    window.joinRoom = async () => {
+      const name = document.getElementById('input-name').value;
+      const code = document.getElementById('input-room').value.toUpperCase();
+      
+      if (!name || !code) {
+        alert('Please enter name and room code!');
+        return;
+      }
+      
+      const roomSnap = await db.ref(`rooms/${code}`).once('value');
+      if (!roomSnap.exists()) {
+        alert('Room not found!');
+        return;
+      }
+      
+      // Check if player already exists in this room
+      const room = roomSnap.val();
+      const existingPlayer = room.players && Object.values(room.players).find(p => p.name === name);
+      
+      let playerId;
+      if (existingPlayer) {
+        playerId = existingPlayer.id;
+        alert('Rejoining room...');
+      } else {
+        playerId = Date.now().toString();
+        await db.ref(`rooms/${code}/players/${playerId}`).set({
+          id: playerId,
+          name: name,
+          production: 50,
+          submitted: false,
+          isEliminated: false
+        });
+      }
+      
+      state.playerName = name;
+      state.playerId = playerId;
+      state.roomCode = code;
+      state.view = 'lobby';
+      
+      // Listen to room changes
+      db.ref(`rooms/${code}`).on('value', (snap) => {
+        state.currentRoom = snap.val();
+        
+        // Check if game state changed
+        if (state.currentRoom.gameState === 'tutorial' && state.view === 'lobby') {
+          state.view = 'tutorial';
+          render();
+        } else if (state.currentRoom.gameState === 'playing' && state.view === 'tutorial') {
+          state.view = 'gameplay';
+          render();
+        }
+      });
+      
+      render();
+    };
+
+    // Instructor control functions
+    window.startTutorial = async (code) => {
+      const roomSnap = await db.ref(`rooms/${code}`).once('value');
+      const room = roomSnap.val();
+      const count = room.players ? Object.keys(room.players).length : 0;
+      
+      if (count < 4) {
+        alert('Need at least 4 players!');
+        return;
+      }
+      
+      await db.ref(`rooms/${code}`).update({ gameState: 'tutorial' });
+    };
+
+    window.startRound1 = async (code) => {
+      await db.ref(`rooms/${code}`).update({ 
+        gameState: 'playing',
+        currentRound: 1
+      });
+    };
+
+    window.endCurrentRound = async (code) => {
+      await db.ref(`rooms/${code}`).update({ gameState: 'roundEnd' });
+    };
+
+    window.nextRoundBtn = async (code) => {
+      const roomSnap = await db.ref(`rooms/${code}`).once('value');
+      const room = roomSnap.val();
+      
+      if (room.currentRound < TOTAL_ROUNDS) {
+        await db.ref(`rooms/${code}`).update({ 
+          gameState: 'playing',
+          currentRound: room.currentRound + 1
+        });
+      } else {
+        await db.ref(`rooms/${code}`).update({ gameState: 'gameEnd' });
+      }
+    };
+
+    // Update production slider
+    window.updateProductionDisplay = (value) => {
+      state.production = Number(value);
+      const prodDisplay = document.getElementById('prod-display');
+      if (prodDisplay) prodDisplay.textContent = value;
+      
+      // Recalculate
+      const players = state.currentRoom.players || {};
+      const activePlayers = Object.values(players).filter(p => !p.isEliminated);
+      const totalProduction = activePlayers.reduce((sum, p) => {
+        if (p.id === state.playerId) return sum + state.production;
+        return sum + p.production;
+      }, 0);
+      const householdBill = BASE_BILL + (totalProduction * EXTERNAL_COST_PER_UNIT);
+      const grossProfit = state.production * PROFIT_PER_UNIT;
+      const netGain = grossProfit - householdBill;
+      
+      const billEl = document.getElementById('bill');
+      const grossEl = document.getElementById('gross-profit');
+      const netEl = document.getElementById('net-gain');
+      
+      if (billEl) billEl.textContent = '-
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html> + householdBill.toFixed(0);
+      if (grossEl) grossEl.textContent = '
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html> + grossProfit;
+      if (netEl) {
+        netEl.textContent = '
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html> + netGain.toFixed(0);
+        netEl.className = 'font-bold ' + (netGain > 0 ? 'text-green-600' : 'text-red-600');
+      }
+    };
+
+    // Submit production
+    window.submitProduction = async () => {
+      if (!state.playerId || !state.roomCode) return;
+      
+      await db.ref(`rooms/${state.roomCode}/players/${state.playerId}`).update({
+        production: state.production,
+        submitted: true
+      });
+      
+      // Re-render to show submitted state
+      render();
+    };
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
