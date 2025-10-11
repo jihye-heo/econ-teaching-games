@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Externality Economics Game</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-app-compat.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-database-compat.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.1/tailwindcss.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // Initialize Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDt0_WzG8o2pecbuYTKRxGI3GDye7k9USg",
+      authDomain: "externality-game.firebaseapp.com",
+      databaseURL: "https://externality-game-default-rtdb.firebaseio.com",
+      projectId: "externality-game",
+      storageBucket: "externality-game.firebasestorage.app",
+      messagingSenderId: "230260835239",
+      appId: "1:230260835239:web:9cacc7579eacd0a5a62c82"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Game constants
+    const PROFIT_PER_UNIT = 10;
+    const EXTERNAL_COST_PER_UNIT = 0.5;
+    const BASE_BILL = 50;
+    const TOTAL_ROUNDS = 3;
+
+    // State
+    let state = {
+      view: 'home',
+      roomCode: '',
+      playerName: '',
+      playerId: '',
+      currentRoom: null,
+      isInstructor: false,
+      production: 50
+    };
+
+    // Render
+    function render() {
+      const root = document.getElementById('root');
+      
+      if (state.view === 'home') {
+        root.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4">
+            <div class="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-8">
+              <div class="text-center mb-8">
+                <div class="text-6xl mb-4">⚡</div>
+                <h1 class="text-4xl font-bold text-gray-800 mb-2">Externality Economics</h1>
+                <p class="text-gray-600">Interactive datacenter simulation</p>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="goToInstructor()" class="bg-indigo-600 hover:bg-indigo-700 text-white p-6 rounded-xl">
+                  <div class="text-4xl mb-2">👨‍🏫</div>
+                  <div class="font-bold text-lg">Instructor</div>
+                </button>
+                <button onclick="goToStudent()" class="bg-green-600 hover:bg-green-700 text-white p-6 rounded-xl">
+                  <div class="text-4xl mb-2">🎮</div>
+                  <div class="font-bold text-lg">Student</div>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (state.view === 'instructor') {
+        root.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 p-4">
+            <div class="max-w-4xl mx-auto">
+              <button onclick="goHome()" class="mb-4 text-white hover:text-blue-200">← Back</button>
+              <div class="bg-white rounded-2xl shadow-2xl p-8">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Instructor Dashboard</h2>
+                <button onclick="createRoom()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold mb-6">
+                  + Create New Room
+                </button>
+                <div id="rooms-list" class="space-y-4">
+                  <p class="text-gray-500">Loading rooms...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        loadRooms();
+      } else if (state.view === 'student') {
+        root.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4">
+            <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+              <button onclick="goHome()" class="mb-4 text-gray-600 hover:text-gray-800">← Back</button>
+              <h2 class="text-3xl font-bold text-gray-800 mb-6">Join Game</h2>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+                  <input id="input-name" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Enter your name">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Room Code</label>
+                  <input id="input-room" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Enter room code">
+                </div>
+                <button onclick="joinRoom()" class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold">
+                  Join Room
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (state.view === 'lobby') {
+        const players = state.currentRoom.players || {};
+        const playerList = Object.values(players);
+        root.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4">
+            <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
+              <div class="text-6xl mb-4 animate-pulse">⚡</div>
+              <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome, ${state.playerName}!</h2>
+              <p class="text-gray-600 mb-6">Waiting for instructor...</p>
+              <div class="bg-indigo-50 rounded-lg p-4 mb-6">
+                <div class="text-sm text-gray-600 mb-2">Room Code</div>
+                <div class="text-3xl font-bold text-indigo-600">${state.currentRoom.code}</div>
+              </div>
+              <div class="text-left bg-gray-50 rounded-lg p-4">
+                <div class="text-sm font-medium text-gray-700 mb-2">Players (${playerList.length}):</div>
+                <ul class="space-y-1">
+                  ${playerList.map(p => `<li class="text-sm text-gray-600">• ${p.name} ${p.name === state.playerName ? '(you)' : ''}</li>`).join('')}
+                </ul>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (state.view === 'gameplay') {
+        if (!state.currentRoom) {
+          root.innerHTML = '<div class="min-h-screen bg-gray-900 text-white flex items-center justify-center"><h1 class="text-3xl">Loading...</h1></div>';
+          return;
+        }
+        
+        if (state.currentRoom.gameState === 'playing') {
+          renderPlayingScreen();
+        } else if (state.currentRoom.gameState === 'roundEnd') {
+          renderRoundEndScreen();
+        } else if (state.currentRoom.gameState === 'gameEnd') {
+          renderGameEndScreen();
+        } else {
+          root.innerHTML = '<div class="min-h-screen bg-gray-900 text-white flex items-center justify-center"><h1 class="text-3xl">Game state: ' + state.currentRoom.gameState + '</h1></div>';
+        }
+      }
+    }
+
+    function renderPlayingScreen() {
+      const root = document.getElementById('root');
+      const players = state.currentRoom.players || {};
+      const myPlayer = players[state.playerId];
+      
+      // Check if eliminated
+      if (myPlayer?.isEliminated) {
+        const activePlayers = Object.values(players).filter(p => !p.isEliminated);
+        const submitted = activePlayers.filter(p => p.submitted).length;
+        root.innerHTML = `
+          <div class="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900 flex items-center justify-center p-4">
+            <div class="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
+              <div class="text-6xl mb-4">💼</div>
+              <h2 class="text-3xl font-bold text-gray-800 mb-4">You've been eliminated!</h2>
+              <p class="text-xl text-gray-600 mb-6">You fell behind and are no longer viable...</p>
+              <div class="bg-gray-50 rounded-lg p-6">
+                <p class="text-gray-700 mb-2">Waiting for Round ${state.currentRoom.currentRound}</p>
+                <div class="text-sm text-gray-500">⏳ ${submitted}/${activePlayers.length} submitted</div>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+      
+      // Calculate preview
+      const activePlayers = Object.values(players).filter(p => !p.isEliminated);
+      const totalProduction = activePlayers.reduce((sum, p) => {
+        if (p.id === state.playerId) return sum + state.production;
+        return sum + p.production;
+      }, 0);
+      const householdBill = BASE_BILL + (totalProduction * EXTERNAL_COST_PER_UNIT);
+      const grossProfit = state.production * PROFIT_PER_UNIT;
+      const netGain = grossProfit - householdBill;
+      
+      const sentiment = householdBill < 70 ? { emoji: '😊', color: 'text-green-500', text: 'Happy' } :
+                        householdBill < 100 ? { emoji: '😐', color: 'text-yellow-500', text: 'Concerned' } :
+                        householdBill < 150 ? { emoji: '😟', color: 'text-orange-500', text: 'Worried' } :
+                        { emoji: '😡', color: 'text-red-500', text: 'Angry' };
+      
+      root.innerHTML = `
+        <div class="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4">
+          <div class="max-w-6xl mx-auto">
+            <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+              <div class="flex justify-between items-center">
+                <div>
+                  <span class="text-sm text-gray-600">Room: ${state.currentRoom.code}</span>
+                  <span class="ml-4 font-bold text-lg">Round ${state.currentRoom.currentRound}/${TOTAL_ROUNDS}</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  ${state.isInstructor ? `
+                    <button onclick="endRound()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
+                      End Round (${activePlayers.filter(p => p.submitted).length}/${activePlayers.length})
+                    </button>
+                  ` : ''}
+                  <div class="text-right">
+                    <div class="text-sm text-gray-600">Total Production</div>
+                    <div class="text-2xl font-bold text-indigo-600">${totalProduction} units</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center mb-4">
+                  <div class="text-2xl mr-2">⚡</div>
+                  <h3 class="text-xl font-bold">Your Datacenter</h3>
+                </div>
+
+                <div class="mb-6">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Production Level: <span id="prod-display">${state.production}</span> units
+                  </label>
+                  <input id="production-slider" type="range" min="0" max="100" value="${state.production}"
+                    onchange="updateProduction(this.value)" class="w-full" ${myPlayer?.submitted ? 'disabled' : ''}>
+                  <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>0</span><span>50</span><span>100</span>
+                  </div>
+                </div>
+
+                <div class="space-y-3 bg-gray-50 rounded-lg p-4">
+                  <div class="flex justify-between">
+                    <span class="text-gray-700">Gross Profit:</span>
+                    <span class="font-bold text-green-600" id="gross-profit">${grossProfit}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-700">Electricity Bill:</span>
+                    <span class="font-bold text-red-600" id="bill">-${householdBill.toFixed(0)}</span>
+                  </div>
+                  <div class="border-t pt-2">
+                    <div class="flex justify-between text-lg">
+                      <span class="font-bold">Net Gain:</span>
+                      <span class="font-bold ${netGain > 0 ? 'text-green-600' : 'text-red-600'}" id="net-gain">
+                        ${netGain.toFixed(0)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <button onclick="submitProduction()" ${myPlayer?.submitted ? 'disabled' : ''}
+                  class="w-full mt-4 px-6 py-3 rounded-lg font-semibold ${
+                    myPlayer?.submitted ? 'bg-gray-300 text-gray-600' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  }">
+                  ${myPlayer?.submitted ? '✓ Submitted' : 'Submit Choice'}
+                </button>
+              </div>
+
+              <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center">
+                    <div class="text-2xl mr-2">🏠</div>
+                    <h3 class="text-xl font-bold">Local Households</h3>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-3xl">${sentiment.emoji}</span>
+                    <span class="font-bold ${sentiment.color}">${sentiment.text}</span>
+                  </div>
+                </div>
+
+                <div class="flex gap-4 mb-4 justify-center">
+                  ${[...Array(5)].map(() => '<div class="text-4xl">🏠</div>').join('')}
+                </div>
+
+                <div class="bg-gray-100 border-l-4 border-blue-400 p-3 mb-2">
+                  <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Household Bill:</span>
+                    <span class="text-2xl font-bold text-gray-800">${householdBill.toFixed(0)}</span>
+                  </div>
+                </div>
+
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3">
+                  <p class="text-sm text-gray-700">
+                    ${householdBill < 70 ? '💬 "Electricity costs are manageable."' :
+                      householdBill < 100 ? '💬 "Bills are climbing..."' :
+                      householdBill < 150 ? '💬 "We can\'t afford this!"' :
+                      '💬 "This is impossible!"'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderRoundEndScreen() {
+      const root = document.getElementById('root');
+      const results = Object.values(state.currentRoom.roundData || {}).sort((a, b) => b.netGain - a.netGain);
+      const myResult = results.find(r => r.name === state.playerName);
+      
+      root.innerHTML = `
+        <div class="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 p-4">
+          <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-2xl p-8">
+              <h2 class="text-3xl font-bold text-center mb-6">Round ${state.currentRoom.currentRound} Results</h2>
+              
+              ${myResult ? `
+                <div class="bg-green-50 rounded-lg p-4 mb-6 text-center">
+                  <div class="text-sm text-gray-600">Your Net Gain</div>
+                  <div class="text-3xl font-bold ${myResult.netGain > 0 ? 'text-green-600' : 'text-red-600'}">
+                    ${myResult.netGain.toFixed(0)}
+                  </div>
+                </div>
+              ` : ''}
+
+              <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 class="font-bold mb-3">Leaderboard</h3>
+                <div class="space-y-2">
+                  ${results.map((r, i) => `
+                    <div class="flex justify-between items-center p-3 rounded ${
+                      r.name === state.playerName ? 'bg-indigo-100 border-2 border-indigo-400' : 'bg-white'
+                    }">
+                      <div class="flex items-center gap-3">
+                        <span class="font-bold text-lg text-gray-500">#${i + 1}</span>
+                        <span class="font-medium">${r.name}</span>
+                        ${r.name === state.playerName ? '<span class="text-xs text-indigo-600">(You)</span>' : ''}
+                      </div>
+                      <div class="font-bold ${r.netGain > 0 ? 'text-green-600' : 'text-red-600'}">
+                        ${r.netGain.toFixed(0)}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+                
+                ${state.currentRoom.currentRound < TOTAL_ROUNDS && results.length > 0 ? `
+                  <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div class="text-sm font-medium text-red-800">
+                      ⚠️ ${results[results.length - 1].name} will be eliminated!
+                    </div>
+                  </div>
+                ` : ''}
+              </div>
+
+              ${state.isInstructor ? `
+                <button onclick="nextRound()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold">
+                  ${state.currentRoom.currentRound < TOTAL_ROUNDS ? 'Next Round' : 'View Final Results'}
+                </button>
+              ` : `
+                <p class="text-center text-gray-500">Waiting for instructor...</p>
+              `}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderGameEndScreen() {
+      const root = document.getElementById('root');
+      const allRounds = state.currentRoom.allRoundData || [];
+      const playerTotals = {};
+      
+      state.currentRoom.players && Object.values(state.currentRoom.players).forEach(p => {
+        playerTotals[p.name] = 0;
+      });
+      
+      allRounds.forEach(round => {
+        round.results.forEach(r => {
+          playerTotals[r.name] = (playerTotals[r.name] || 0) + r.netGain;
+        });
+      });
+      
+      const finalResults = Object.entries(playerTotals)
+        .map(([name, total]) => ({ name, total }))
+        .sort((a, b) => b.total - a.total);
+      
+      root.innerHTML = `
+        <div class="min-h-screen bg-gradient-to-br from-green-900 via-blue-900 to-purple-900 p-4">
+          <div class="max-w-5xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-2xl p-8">
+              <h1 class="text-4xl font-bold text-center mb-2">Game Complete! 🎉</h1>
+              <p class="text-center text-gray-600 mb-8">Final results after ${TOTAL_ROUNDS} rounds</p>
+
+              <div class="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg p-6 mb-8 border-2 border-yellow-300">
+                <h3 class="text-2xl font-bold text-center mb-4">🏆 Winner</h3>
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-amber-600 mb-2">${finalResults[0]?.name}</div>
+                  <div class="text-xl text-gray-600">Total: ${finalResults[0]?.total.toFixed(0)}</div>
+                </div>
+              </div>
+
+              <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                <h3 class="font-bold text-xl mb-4">Final Standings</h3>
+                <div class="space-y-3">
+                  ${finalResults.map((p, i) => `
+                    <div class="flex justify-between items-center p-4 rounded-lg ${
+                      i === 0 ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-white'
+                    }">
+                      <div class="flex items-center gap-4">
+                        <span class="text-2xl">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
+                        <span class="font-medium text-lg">${p.name}</span>
+                      </div>
+                      <div class="text-2xl font-bold ${p.total > 0 ? 'text-green-600' : 'text-red-600'}">
+                        ${p.total.toFixed(0)}
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <div class="bg-purple-50 rounded-lg p-6">
+                <h3 class="text-xl font-bold text-purple-800 mb-3">💡 Key Takeaway</h3>
+                <p class="text-gray-700">
+                  <strong>Negative Externality:</strong> When everyone produced more to maximize their own profit,
+                  total production increased everyone's bills. Your choices affected the entire community!
+                </p>
+              </div>
+
+              ${state.isInstructor ? `
+                <button onclick="goHome()" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-semibold">
+                  Back to Home
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Navigation
+    window.goHome = () => { state.view = 'home'; render(); };
+    window.goToInstructor = () => { state.view = 'instructor'; render(); };
+    window.goToStudent = () => { state.view = 'student'; render(); };
+
+    // Create room
+    window.createRoom = async () => {
+      const codes = ['ALPHA', 'BRAVO', 'CHARLIE', 'DELTA', 'ECHO', 'FOXTROT'];
+      const code = codes[Math.floor(Math.random() * codes.length)] + Math.floor(Math.random() * 100);
+      
+      await db.ref(`rooms/${code}`).set({
+        code,
+        players: {},
+        currentRound: 1,
+        gameState: 'lobby'
+      });
+      
+      alert(`Room created! Code: ${code}`);
+      render();
+    };
+
+    // Load rooms
+    function loadRooms() {
+      db.ref('rooms').on('value', (snapshot) => {
+        const data = snapshot.val();
+        const list = document.getElementById('rooms-list');
+        if (!list) return;
+        
+        if (!data) {
+          list.innerHTML = '<p class="text-gray-500">No rooms yet.</p>';
+          return;
+        }
+        
+        list.innerHTML = Object.keys(data).map(code => {
+          const room = data[code];
+          const count = room.players ? Object.keys(room.players).length : 0;
+          return `
+            <div class="border rounded-lg p-4">
+              <div class="flex justify-between items-center">
+                <div>
+                  <span class="text-2xl font-bold text-indigo-600">${code}</span>
+                  <span class="ml-4 text-gray-600">${count} students</span>
+                </div>
+                <button onclick="startGameRoom('${code}')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                  Start Game
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      });
+    }
+
+    // Join room
+    window.joinRoom = async () => {
+      const name = document.getElementById('input-name').value;
+      const code = document.getElementById('input-room').value.toUpperCase();
+      
+      if (!name || !code) {
+        alert('Please enter name and room code!');
+        return;
+      }
+      
+      const roomSnap = await db.ref(`rooms/${code}`).once('value');
+      if (!roomSnap.exists()) {
+        alert('Room not found!');
+        return;
+      }
+      
+      const playerId = Date.now().toString();
+      await db.ref(`rooms/${code}/players/${playerId}`).set({
+        id: playerId,
+        name: name,
+        production: 50,
+        submitted: false,
+        isEliminated: false
+      });
+      
+      state.playerName = name;
+      state.playerId = playerId;
+      state.roomCode = code;
+      state.view = 'lobby';
+      
+      // Listen to room
+      db.ref(`rooms/${code}`).on('value', (snap) => {
+        state.currentRoom = snap.val();
+        if (state.currentRoom.gameState === 'playing') {
+          state.view = 'gameplay';
+        }
+        render();
+      });
+      
+      render();
+    };
+
+    // Start game
+    window.startGameRoom = async (code) => {
+      const roomSnap = await db.ref(`rooms/${code}`).once('value');
+      const room = roomSnap.val();
+      const count = room.players ? Object.keys(room.players).length : 0;
+      
+      if (count < 4) {
+        alert('Need at least 4 players!');
+        return;
+      }
+      
+      await db.ref(`rooms/${code}`).update({ 
+        gameState: 'playing',
+        currentRound: 1,
+        roundData: {},
+        allRoundData: []
+      });
+      alert('Game started!');
+    };
+
+    // Update production slider
+    window.updateProduction = (value) => {
+      state.production = Number(value);
+      document.getElementById('prod-display').textContent = value;
+      
+      // Recalculate and update display
+      const players = state.currentRoom.players || {};
+      const activePlayers = Object.values(players).filter(p => !p.isEliminated);
+      const totalProduction = activePlayers.reduce((sum, p) => {
+        if (p.id === state.playerId) return sum + state.production;
+        return sum + p.production;
+      }, 0);
+      const householdBill = BASE_BILL + (totalProduction * EXTERNAL_COST_PER_UNIT);
+      const grossProfit = state.production * PROFIT_PER_UNIT;
+      const netGain = grossProfit - householdBill;
+      
+      document.getElementById('gross-profit').textContent = '
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html> + grossProfit;
+      document.getElementById('bill').textContent = '-
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html> + householdBill.toFixed(0);
+      document.getElementById('net-gain').textContent = '
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html> + netGain.toFixed(0);
+      document.getElementById('net-gain').className = netGain > 0 ? 'font-bold text-green-600' : 'font-bold text-red-600';
+    };
+
+    // Submit production
+    window.submitProduction = async () => {
+      if (!state.playerId || !state.roomCode) return;
+      
+      await db.ref(`rooms/${state.roomCode}/players/${state.playerId}`).update({
+        production: state.production,
+        submitted: true
+      });
+    };
+
+    // End round (instructor)
+    window.endRound = async () => {
+      const players = state.currentRoom.players || {};
+      const activePlayers = Object.values(players).filter(p => !p.isEliminated);
+      const totalProduction = activePlayers.reduce((sum, p) => sum + p.production, 0);
+      const householdBill = BASE_BILL + (totalProduction * EXTERNAL_COST_PER_UNIT);
+      
+      const results = activePlayers.map(p => {
+        const grossProfit = p.production * PROFIT_PER_UNIT;
+        const netGain = grossProfit - householdBill;
+        return { ...p, grossProfit, householdBill, netGain };
+      }).sort((a, b) => b.netGain - a.netGain);
+      
+      // Save results
+      const roundDataUpdate = {};
+      results.forEach(r => { roundDataUpdate[r.id] = r; });
+      await db.ref(`rooms/${state.roomCode}/roundData`).set(roundDataUpdate);
+      
+      // Add to history
+      const allRoundData = state.currentRoom.allRoundData || [];
+      allRoundData.push({ round: state.currentRoom.currentRound, results });
+      await db.ref(`rooms/${state.roomCode}/allRoundData`).set(allRoundData);
+      
+      // Eliminate last place
+      if (state.currentRoom.currentRound < TOTAL_ROUNDS && results.length > 0) {
+        const lastPlace = results[results.length - 1];
+        await db.ref(`rooms/${state.roomCode}/players/${lastPlace.id}/isEliminated`).set(true);
+      }
+      
+      await db.ref(`rooms/${state.roomCode}/gameState`).set('roundEnd');
+    };
+
+    // Next round (instructor)
+    window.nextRound = async () => {
+      if (state.currentRoom.currentRound < TOTAL_ROUNDS) {
+        await db.ref(`rooms/${state.roomCode}/currentRound`).set(state.currentRoom.currentRound + 1);
+        
+        // Reset players
+        const players = state.currentRoom.players || {};
+        const updates = {};
+        Object.keys(players).forEach(pid => {
+          if (!players[pid].isEliminated) {
+            updates[`rooms/${state.roomCode}/players/${pid}/submitted`] = false;
+            updates[`rooms/${state.roomCode}/players/${pid}/production`] = 50;
+          }
+        });
+        await db.ref().update(updates);
+        
+        await db.ref(`rooms/${state.roomCode}/gameState`).set('playing');
+        state.production = 50;
+      } else {
+        await db.ref(`rooms/${state.roomCode}/gameState`).set('gameEnd');
+      }
+    };
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
