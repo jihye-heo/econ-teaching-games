@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Externality Economics Game</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-app-compat.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-database-compat.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.1/tailwindcss.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyDt0_WzG8o2pecbuYTKRxGI3GDye7k9USg",
+      authDomain: "externality-game.firebaseapp.com",
+      databaseURL: "https://externality-game-default-rtdb.firebaseio.com",
+      projectId: "externality-game",
+      storageBucket: "externality-game.firebasestorage.app",
+      messagingSenderId: "230260835239",
+      appId: "1:230260835239:web:9cacc7579eacd0a5a62c82"
+    });
+    const db = firebase.database();
+
+    const TOTAL_ROUNDS = 3;
+    let state = { view: 'home', roomCode: '', playerName: '', playerId: '', currentRoom: null, production: 50 };
+
+    function render() {
+      const root = document.getElementById('root');
+      
+      if (state.view === 'home') {
+        root.innerHTML = '<div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4"><div class="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-8"><div class="text-center mb-8"><div class="text-6xl mb-4">⚡</div><h1 class="text-4xl font-bold text-gray-800 mb-2">Externality Economics</h1></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button onclick="goToInstructor()" class="bg-indigo-600 hover:bg-indigo-700 text-white p-6 rounded-xl"><div class="text-4xl mb-2">👨‍🏫</div><div class="font-bold text-lg">Instructor</div></button><button onclick="goToStudent()" class="bg-green-600 hover:bg-green-700 text-white p-6 rounded-xl"><div class="text-4xl mb-2">🎮</div><div class="font-bold text-lg">Student</div></button></div></div></div>';
+      } else if (state.view === 'instructor') {
+        root.innerHTML = '<div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 p-4"><div class="max-w-4xl mx-auto"><button onclick="goHome()" class="mb-4 text-white">← Back</button><div class="bg-white rounded-2xl shadow-2xl p-8"><h2 class="text-3xl font-bold text-gray-800 mb-6">Instructor Dashboard</h2><button onclick="createRoom()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg mb-6">+ Create New Room</button><div id="rooms-list"><p class="text-gray-500">Loading...</p></div></div></div></div>';
+        loadRooms();
+      } else if (state.view === 'student') {
+        root.innerHTML = '<div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4"><div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8"><button onclick="goHome()" class="mb-4 text-gray-600">← Back</button><h2 class="text-3xl font-bold text-gray-800 mb-6">Join Game</h2><div class="space-y-4"><div><label class="block text-sm font-medium text-gray-700 mb-2">Your Name</label><input id="input-name" type="text" class="w-full px-4 py-2 border rounded-lg"></div><div><label class="block text-sm font-medium text-gray-700 mb-2">Room Code</label><input id="input-room" type="text" class="w-full px-4 py-2 border rounded-lg"></div><button onclick="joinRoom()" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg">Join Room</button></div></div></div>';
+      } else if (state.view === 'lobby') {
+        const players = state.currentRoom.players || {};
+        const playerList = Object.values(players);
+        let playersHTML = '';
+        playerList.forEach(function(p) {
+          playersHTML += '<li class="text-sm text-gray-600">• ' + p.name + (p.name === state.playerName ? ' (you)' : '') + '</li>';
+        });
+        root.innerHTML = '<div class="min-h-screen bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center p-4"><div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center"><div class="text-6xl mb-4 animate-pulse">⚡</div><h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome, ' + state.playerName + '!</h2><p class="text-gray-600 mb-6">Waiting for instructor...</p><div class="bg-indigo-50 rounded-lg p-4 mb-6"><div class="text-sm text-gray-600 mb-2">Room Code</div><div class="text-3xl font-bold text-indigo-600">' + state.currentRoom.code + '</div></div><div class="text-left bg-gray-50 rounded-lg p-4"><div class="text-sm font-medium text-gray-700 mb-2">Players (' + playerList.length + '):</div><ul class="space-y-1">' + playersHTML + '</ul></div></div></div>';
+      } else if (state.view === 'tutorial') {
+        root.innerHTML = '<div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 flex items-center justify-center p-4"><div class="max-w-3xl w-full bg-white rounded-2xl shadow-2xl p-8"><div class="text-center mb-6"><div class="text-6xl mb-4">🏢⚡</div><h1 class="text-4xl font-bold text-gray-800 mb-2">Welcome to the AI Datacenter Game</h1></div><div class="space-y-6 text-gray-700"><div class="bg-blue-50 rounded-lg p-6 border-l-4 border-blue-500"><h2 class="font-bold text-xl text-blue-900 mb-3">The Scenario</h2><p>AI companies are building massive datacenters. This is a negative externality.</p></div><div class="bg-red-50 rounded-lg p-6 border-l-4 border-red-500"><h2 class="font-bold text-xl text-red-900 mb-3">Elimination Rules</h2><p>After each round, last place is eliminated.</p></div></div><div class="mt-8 text-center"><p class="text-gray-500">Waiting for instructor...</p></div></div></div>';
+      } else if (state.view === 'gameplay') {
+        root.innerHTML = '<div class="min-h-screen bg-slate-900 text-white p-8"><div class="max-w-4xl mx-auto bg-white text-gray-800 rounded-lg p-6"><h2 class="text-2xl font-bold mb-4">Round 1</h2><p>Gameplay coming soon...</p></div></div>';
+      }
+    }
+
+    window.goHome = function() { state.view = 'home'; render(); };
+    window.goToInstructor = function() { state.view = 'instructor'; render(); };
+    window.goToStudent = function() { state.view = 'student'; render(); };
+
+    window.createRoom = async function() {
+      const codes = ['ALPHA', 'BRAVO', 'CHARLIE'];
+      const code = codes[Math.floor(Math.random() * 3)] + Math.floor(Math.random() * 100);
+      await db.ref('rooms/' + code).set({ code: code, players: {}, currentRound: 1, gameState: 'lobby' });
+      alert('Room created! Code: ' + code);
+      render();
+    };
+
+    function loadRooms() {
+      db.ref('rooms').on('value', function(snapshot) {
+        const data = snapshot.val();
+        const list = document.getElementById('rooms-list');
+        if (!list) return;
+        if (!data) { list.innerHTML = '<p>No rooms</p>'; return; }
+        
+        let html = '';
+        Object.keys(data).forEach(function(code) {
+          const room = data[code];
+          const count = room.players ? Object.keys(room.players).length : 0;
+          const gs = room.gameState || 'lobby';
+          html += '<div class="border rounded-lg p-4 mb-4"><div class="flex justify-between mb-2"><span class="text-2xl font-bold text-indigo-600">' + code + '</span><span>' + count + ' students</span></div><div class="flex gap-2"><button onclick="startTutorial(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'lobby' ? 'bg-blue-600 text-white' : 'bg-gray-300') + '">Tutorial</button><button onclick="startRound1(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'tutorial' ? 'bg-green-600 text-white' : 'bg-gray-300') + '">Round 1</button></div></div>';
+        });
+        list.innerHTML = html;
+      });
+    }
+
+    window.joinRoom = async function() {
+      const name = document.getElementById('input-name').value;
+      const code = document.getElementById('input-room').value.toUpperCase();
+      if (!name || !code) { alert('Enter name and code!'); return; }
+      
+      const roomSnap = await db.ref('rooms/' + code).once('value');
+      if (!roomSnap.exists()) { alert('Room not found!'); return; }
+      
+      const room = roomSnap.val();
+      const existingPlayer = room.players && Object.values(room.players).find(function(p) { return p.name === name; });
+      
+      let playerId;
+      if (existingPlayer) {
+        playerId = existingPlayer.id;
+      } else {
+        playerId = Date.now().toString();
+        await db.ref('rooms/' + code + '/players/' + playerId).set({ id: playerId, name: name, production: 50, submitted: false });
+      }
+      
+      state.playerName = name;
+      state.playerId = playerId;
+      state.roomCode = code;
+      state.view = 'lobby';
+      
+      db.ref('rooms/' + code).on('value', function(snap) {
+        state.currentRoom = snap.val();
+        if (state.currentRoom.gameState === 'tutorial' && state.view === 'lobby') {
+          state.view = 'tutorial';
+          render();
+        } else if (state.currentRoom.gameState === 'playing' && state.view === 'tutorial') {
+          state.view = 'gameplay';
+          render();
+        }
+      });
+      
+      render();
+    };
+
+    window.startTutorial = async function(code) {
+      await db.ref('rooms/' + code).update({ gameState: 'tutorial' });
+    };
+
+    window.startRound1 = async function(code) {
+      await db.ref('rooms/' + code).update({ gameState: 'playing', currentRound: 1 });
+    };
+
+    render();
+  </script>
+</body>
+</html>
