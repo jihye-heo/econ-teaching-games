@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Externality Game</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-app-compat.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.7.1/firebase-database-compat.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tailwindcss-cdn@3.4.1/tailwindcss.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyDt0_WzG8o2pecbuYTKRxGI3GDye7k9USg",
+      authDomain: "externality-game.firebaseapp.com",
+      databaseURL: "https://externality-game-default-rtdb.firebaseio.com",
+      projectId: "externality-game",
+      storageBucket: "externality-game.firebasestorage.app",
+      messagingSenderId: "230260835239",
+      appId: "1:230260835239:web:9cacc7579eacd0a5a62c82"
+    });
+    var db = firebase.database();
+    var state = { view: 'home', roomCode: '', playerName: '', playerId: '', currentRoom: null, production: 50 };
+
+    function render() {
+      var root = document.getElementById('root');
+      if (state.view === 'home') {
+        root.innerHTML = '<div class="min-h-screen bg-blue-900 flex items-center justify-center p-4"><div class="bg-white rounded-2xl p-8 max-w-2xl"><div class="text-center mb-8"><div class="text-6xl mb-4">⚡</div><h1 class="text-4xl font-bold mb-2">Externality Economics</h1></div><div class="grid grid-cols-2 gap-4"><button onclick="goInstructor()" class="bg-indigo-600 text-white p-6 rounded-xl"><div class="text-4xl mb-2">👨‍🏫</div><div class="font-bold">Instructor</div></button><button onclick="goStudent()" class="bg-green-600 text-white p-6 rounded-xl"><div class="text-4xl mb-2">🎮</div><div class="font-bold">Student</div></button></div></div></div>';
+      } else if (state.view === 'instructor') {
+        root.innerHTML = '<div class="min-h-screen bg-blue-900 p-4"><div class="max-w-4xl mx-auto"><button onclick="goHome()" class="mb-4 text-white">Back</button><div class="bg-white rounded-2xl p-8"><h2 class="text-3xl font-bold mb-6">Instructor Dashboard</h2><button onclick="createRoom()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg mb-6">Create Room</button><div id="rooms-list">Loading...</div></div></div></div>';
+        loadRooms();
+      } else if (state.view === 'student') {
+        root.innerHTML = '<div class="min-h-screen bg-blue-900 flex items-center justify-center p-4"><div class="bg-white rounded-2xl p-8 max-w-md"><button onclick="goHome()" class="mb-4">Back</button><h2 class="text-3xl font-bold mb-6">Join Game</h2><input id="input-name" type="text" placeholder="Your name" class="w-full px-4 py-2 border rounded-lg mb-4"><input id="input-room" type="text" placeholder="Room code" class="w-full px-4 py-2 border rounded-lg mb-4"><button onclick="joinRoom()" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg">Join</button></div></div>';
+      } else if (state.view === 'lobby') {
+        var players = state.currentRoom.players || {};
+        var playerList = Object.values(players);
+        var html = '<div class="min-h-screen bg-blue-900 flex items-center justify-center p-4"><div class="bg-white rounded-2xl p-8 text-center max-w-md"><div class="text-6xl mb-4">⚡</div><h2 class="text-3xl font-bold mb-4">Welcome!</h2><p class="mb-6">Waiting for instructor...</p><div class="bg-indigo-50 rounded-lg p-4 mb-6"><div class="text-sm mb-2">Room Code</div><div class="text-3xl font-bold text-indigo-600">' + state.currentRoom.code + '</div></div><div class="bg-gray-50 rounded-lg p-4"><div class="text-sm font-medium mb-2">Players: ' + playerList.length + '</div><ul>';
+        for (var i = 0; i < playerList.length; i++) {
+          html += '<li class="text-sm">' + playerList[i].name + '</li>';
+        }
+        html += '</ul></div></div></div>';
+        root.innerHTML = html;
+      } else if (state.view === 'tutorial') {
+        root.innerHTML = '<div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-blue-900 flex items-center justify-center p-4"><div class="max-w-3xl bg-white rounded-2xl p-8"><div class="text-center mb-6"><div class="text-6xl mb-4">🏢⚡</div><h1 class="text-4xl font-bold text-gray-800 mb-2">Welcome to the AI Datacenter Game</h1><p class="text-lg text-gray-600">Understanding Negative Externalities Through Competition</p></div><div class="space-y-6 text-gray-700"><div class="bg-blue-50 rounded-lg p-6 border-l-4 border-blue-500"><h2 class="font-bold text-xl text-blue-900 mb-3">🌍 The Scenario</h2><p>AI companies are building massive datacenters that use huge amounts of electricity. The cost of this electricity consumption is spread across neighborhoods, affecting everyone. This is a <strong>negative externality</strong> - when your actions impose costs on others.</p></div><div class="bg-green-50 rounded-lg p-6 border-l-4 border-green-500"><h2 class="font-bold text-xl text-green-900 mb-3">🎮 Your Role</h2><p>You are each a datacenter operator producing AI services for customers. <strong>If you produce more, you earn more profit</strong> - but you also use more electricity, which <strong>increases costs for everyone</strong> (including yourself!).</p></div><div class="bg-yellow-50 rounded-lg p-6 border-l-4 border-yellow-500"><h2 class="font-bold text-xl text-yellow-900 mb-3">⚖️ The Trade-off</h2><ul class="space-y-2 ml-4"><li>• <strong>More production</strong> = Higher profit for you</li><li>• <strong>More production</strong> = Higher electricity bills for everyone</li><li>• Your choice affects the entire community!</li></ul></div><div class="bg-red-50 rounded-lg p-6 border-l-4 border-red-500"><h2 class="font-bold text-xl text-red-900 mb-3">💀 Elimination Rules</h2><p class="mb-2"><strong>This is a competition for survival.</strong> After each round, the datacenter with the <strong>lowest profit will be eliminated</strong> from the market.</p><ul class="ml-4 space-y-1"><li>• Round 1: Last place eliminated</li><li>• Round 2: Last place eliminated again</li><li>• Round 3: Final round - Winner takes all! 🏆</li></ul></div><div class="bg-purple-50 rounded-lg p-6 border-l-4 border-purple-500"><h2 class="font-bold text-xl text-purple-900 mb-3">🤔 The Question</h2><p>Will you cooperate to keep costs low for everyone? Or will competition drive you to overproduce, creating a <strong>tragedy of the commons</strong>? Let\'s find out!</p></div></div><p class="text-center text-gray-500 mt-8">Waiting for instructor to start Round 1...</p></div></div>';
+      } else if (state.view === 'gameplay') {
+        // Calculate based on all players
+        var players = state.currentRoom.players || {};
+        var activePlayers = [];
+        Object.keys(players).forEach(function(pid) {
+          if (!players[pid].isEliminated) {
+            activePlayers.push(players[pid]);
+          }
+        });
+        
+        var totalProduction = 0;
+        activePlayers.forEach(function(p) {
+          if (p.id === state.playerId) {
+            totalProduction += state.production;
+          } else {
+            totalProduction += p.production;
+          }
+        });
+        
+        var householdBill = 50 + (totalProduction * 0.5);
+        var grossProfit = state.production * 10;
+        var netGain = grossProfit - householdBill;
+        
+        var sentimentEmoji = householdBill < 70 ? '😊' : householdBill < 100 ? '😐' : householdBill < 150 ? '😟' : '😡';
+        var sentimentText = householdBill < 70 ? 'Happy' : householdBill < 100 ? 'Concerned' : householdBill < 150 ? 'Worried' : 'Angry';
+        var sentimentColor = householdBill < 70 ? '#10b981' : householdBill < 100 ? '#eab308' : householdBill < 150 ? '#f97316' : '#ef4444';
+        var billMsg = householdBill < 70 ? 'Costs are manageable' : householdBill < 100 ? 'Bills are climbing' : householdBill < 150 ? 'Cannot afford this' : 'This is impossible';
+        
+        root.innerHTML = '<div style="padding:20px;background:#0f172a;min-height:100vh;"><div style="max-width:1200px;margin:0 auto;"><div style="background:white;padding:16px;border-radius:8px;margin-bottom:16px;"><div style="display:flex;justify-content:space-between;align-items:center;"><div><span style="color:#6b7280;font-size:14px;">Room: ' + state.currentRoom.code + '</span><span style="margin-left:16px;font-weight:bold;">Round ' + state.currentRoom.currentRound + '</span></div><div style="text-align:right;"><div style="color:#6b7280;font-size:14px;">Total Production</div><div style="font-size:24px;font-weight:bold;color:#4f46e5;">' + totalProduction + ' units</div></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"><div style="background:white;padding:24px;border-radius:8px;"><h3 style="font-weight:bold;font-size:20px;margin-bottom:16px;">⚡ Your Datacenter</h3><div style="margin-bottom:24px;"><label style="display:block;margin-bottom:10px;font-weight:500;">Production Level: <span id="prod-val">' + state.production + '</span> units</label><input id="prod-slider" type="range" min="0" max="100" value="' + state.production + '" style="width:100%;"><div style="display:flex;justify-content:space-between;font-size:12px;color:#6b7280;margin-top:4px;"><span>0</span><span>50</span><span>100</span></div></div><div style="background:#f9fafb;padding:16px;border-radius:8px;margin-bottom:16px;"><div style="display:flex;justify-content:space-between;margin-bottom:12px;"><span>Gross Profit:</span><span style="font-weight:bold;color:#10b981;" id="profit-val">
+
+    window.goHome = function() { state.view = 'home'; render(); };
+    window.goInstructor = function() { state.view = 'instructor'; render(); };
+    window.goStudent = function() { state.view = 'student'; render(); };
+
+    window.createRoom = async function() {
+      var code = 'ALPHA' + Math.floor(Math.random() * 100);
+      await db.ref('rooms/' + code).set({ code: code, players: {}, currentRound: 1, gameState: 'lobby' });
+      alert('Room: ' + code);
+      render();
+    };
+
+    function loadRooms() {
+      db.ref('rooms').on('value', function(snap) {
+        var data = snap.val();
+        var list = document.getElementById('rooms-list');
+        if (!list) return;
+        if (!data) { list.innerHTML = 'No rooms'; return; }
+        var html = '';
+        Object.keys(data).forEach(function(code) {
+          var room = data[code];
+          var count = room.players ? Object.keys(room.players).length : 0;
+          var gs = room.gameState || 'lobby';
+          html += '<div class="border rounded p-4 mb-4"><div class="flex justify-between mb-2"><span class="text-2xl font-bold">' + code + '</span><span>' + count + ' students</span></div><div class="flex gap-2"><button onclick="startTut(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'lobby' ? 'bg-blue-600 text-white' : 'bg-gray-300') + '">Tutorial</button><button onclick="startR1(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'tutorial' ? 'bg-green-600 text-white' : 'bg-gray-300') + '">Round 1</button></div></div>';
+        });
+        list.innerHTML = html;
+      });
+    }
+
+    window.joinRoom = async function() {
+      var name = document.getElementById('input-name').value;
+      var code = document.getElementById('input-room').value.toUpperCase();
+      if (!name || !code) { alert('Enter name and code'); return; }
+      
+      var snap = await db.ref('rooms/' + code).once('value');
+      if (!snap.exists()) { alert('Room not found'); return; }
+      
+      var room = snap.val();
+      var players = room.players || {};
+      
+      // Check if this player name already exists
+      var existingPlayer = null;
+      Object.keys(players).forEach(function(pid) {
+        if (players[pid].name === name) {
+          existingPlayer = players[pid];
+        }
+      });
+      
+      var playerId;
+      if (existingPlayer) {
+        playerId = existingPlayer.id;
+        alert('Rejoining as ' + name);
+      } else {
+        playerId = Date.now().toString();
+        await db.ref('rooms/' + code + '/players/' + playerId).set({ 
+          id: playerId, 
+          name: name, 
+          production: 50, 
+          submitted: false,
+          isEliminated: false
+        });
+      }
+      
+      state.playerName = name;
+      state.playerId = playerId;
+      state.roomCode = code;
+      state.view = 'lobby';
+      
+      db.ref('rooms/' + code).on('value', function(s) {
+        state.currentRoom = s.val();
+        if (state.currentRoom.gameState === 'tutorial' && state.view === 'lobby') { 
+          state.view = 'tutorial'; 
+          render(); 
+        } else if (state.currentRoom.gameState === 'playing' && state.view === 'tutorial') { 
+          state.view = 'gameplay'; 
+          render(); 
+        }
+      });
+      
+      render();
+    };
+
+    window.startTut = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'tutorial' }); };
+    window.startR1 = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'playing', currentRound: 1 }); };
+
+    render();
+  </script>
+</body>
+</html> + grossProfit + '</span></div><div style="display:flex;justify-content:space-between;margin-bottom:12px;"><span>Electricity Bill:</span><span style="font-weight:bold;color:#ef4444;" id="bill-val">-
+
+    window.goHome = function() { state.view = 'home'; render(); };
+    window.goInstructor = function() { state.view = 'instructor'; render(); };
+    window.goStudent = function() { state.view = 'student'; render(); };
+
+    window.createRoom = async function() {
+      var code = 'ALPHA' + Math.floor(Math.random() * 100);
+      await db.ref('rooms/' + code).set({ code: code, players: {}, currentRound: 1, gameState: 'lobby' });
+      alert('Room: ' + code);
+      render();
+    };
+
+    function loadRooms() {
+      db.ref('rooms').on('value', function(snap) {
+        var data = snap.val();
+        var list = document.getElementById('rooms-list');
+        if (!list) return;
+        if (!data) { list.innerHTML = 'No rooms'; return; }
+        var html = '';
+        Object.keys(data).forEach(function(code) {
+          var room = data[code];
+          var count = room.players ? Object.keys(room.players).length : 0;
+          var gs = room.gameState || 'lobby';
+          html += '<div class="border rounded p-4 mb-4"><div class="flex justify-between mb-2"><span class="text-2xl font-bold">' + code + '</span><span>' + count + ' students</span></div><div class="flex gap-2"><button onclick="startTut(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'lobby' ? 'bg-blue-600 text-white' : 'bg-gray-300') + '">Tutorial</button><button onclick="startR1(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'tutorial' ? 'bg-green-600 text-white' : 'bg-gray-300') + '">Round 1</button></div></div>';
+        });
+        list.innerHTML = html;
+      });
+    }
+
+    window.joinRoom = async function() {
+      var name = document.getElementById('input-name').value;
+      var code = document.getElementById('input-room').value.toUpperCase();
+      if (!name || !code) { alert('Enter name and code'); return; }
+      
+      var snap = await db.ref('rooms/' + code).once('value');
+      if (!snap.exists()) { alert('Room not found'); return; }
+      
+      var room = snap.val();
+      var players = room.players || {};
+      
+      // Check if this player name already exists
+      var existingPlayer = null;
+      Object.keys(players).forEach(function(pid) {
+        if (players[pid].name === name) {
+          existingPlayer = players[pid];
+        }
+      });
+      
+      var playerId;
+      if (existingPlayer) {
+        playerId = existingPlayer.id;
+        alert('Rejoining as ' + name);
+      } else {
+        playerId = Date.now().toString();
+        await db.ref('rooms/' + code + '/players/' + playerId).set({ 
+          id: playerId, 
+          name: name, 
+          production: 50, 
+          submitted: false,
+          isEliminated: false
+        });
+      }
+      
+      state.playerName = name;
+      state.playerId = playerId;
+      state.roomCode = code;
+      state.view = 'lobby';
+      
+      db.ref('rooms/' + code).on('value', function(s) {
+        state.currentRoom = s.val();
+        if (state.currentRoom.gameState === 'tutorial' && state.view === 'lobby') { 
+          state.view = 'tutorial'; 
+          render(); 
+        } else if (state.currentRoom.gameState === 'playing' && state.view === 'tutorial') { 
+          state.view = 'gameplay'; 
+          render(); 
+        }
+      });
+      
+      render();
+    };
+
+    window.startTut = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'tutorial' }); };
+    window.startR1 = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'playing', currentRound: 1 }); };
+
+    render();
+  </script>
+</body>
+</html> + householdBill.toFixed(0) + '</span></div><div style="border-top:1px solid #e5e7eb;padding-top:12px;"><div style="display:flex;justify-content:space-between;font-size:18px;"><span style="font-weight:bold;">Net Gain:</span><span style="font-weight:bold;color:' + (netGain > 0 ? '#10b981' : '#ef4444') + ';" id="net-val">
+
+    window.goHome = function() { state.view = 'home'; render(); };
+    window.goInstructor = function() { state.view = 'instructor'; render(); };
+    window.goStudent = function() { state.view = 'student'; render(); };
+
+    window.createRoom = async function() {
+      var code = 'ALPHA' + Math.floor(Math.random() * 100);
+      await db.ref('rooms/' + code).set({ code: code, players: {}, currentRound: 1, gameState: 'lobby' });
+      alert('Room: ' + code);
+      render();
+    };
+
+    function loadRooms() {
+      db.ref('rooms').on('value', function(snap) {
+        var data = snap.val();
+        var list = document.getElementById('rooms-list');
+        if (!list) return;
+        if (!data) { list.innerHTML = 'No rooms'; return; }
+        var html = '';
+        Object.keys(data).forEach(function(code) {
+          var room = data[code];
+          var count = room.players ? Object.keys(room.players).length : 0;
+          var gs = room.gameState || 'lobby';
+          html += '<div class="border rounded p-4 mb-4"><div class="flex justify-between mb-2"><span class="text-2xl font-bold">' + code + '</span><span>' + count + ' students</span></div><div class="flex gap-2"><button onclick="startTut(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'lobby' ? 'bg-blue-600 text-white' : 'bg-gray-300') + '">Tutorial</button><button onclick="startR1(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'tutorial' ? 'bg-green-600 text-white' : 'bg-gray-300') + '">Round 1</button></div></div>';
+        });
+        list.innerHTML = html;
+      });
+    }
+
+    window.joinRoom = async function() {
+      var name = document.getElementById('input-name').value;
+      var code = document.getElementById('input-room').value.toUpperCase();
+      if (!name || !code) { alert('Enter name and code'); return; }
+      
+      var snap = await db.ref('rooms/' + code).once('value');
+      if (!snap.exists()) { alert('Room not found'); return; }
+      
+      var room = snap.val();
+      var players = room.players || {};
+      
+      // Check if this player name already exists
+      var existingPlayer = null;
+      Object.keys(players).forEach(function(pid) {
+        if (players[pid].name === name) {
+          existingPlayer = players[pid];
+        }
+      });
+      
+      var playerId;
+      if (existingPlayer) {
+        playerId = existingPlayer.id;
+        alert('Rejoining as ' + name);
+      } else {
+        playerId = Date.now().toString();
+        await db.ref('rooms/' + code + '/players/' + playerId).set({ 
+          id: playerId, 
+          name: name, 
+          production: 50, 
+          submitted: false,
+          isEliminated: false
+        });
+      }
+      
+      state.playerName = name;
+      state.playerId = playerId;
+      state.roomCode = code;
+      state.view = 'lobby';
+      
+      db.ref('rooms/' + code).on('value', function(s) {
+        state.currentRoom = s.val();
+        if (state.currentRoom.gameState === 'tutorial' && state.view === 'lobby') { 
+          state.view = 'tutorial'; 
+          render(); 
+        } else if (state.currentRoom.gameState === 'playing' && state.view === 'tutorial') { 
+          state.view = 'gameplay'; 
+          render(); 
+        }
+      });
+      
+      render();
+    };
+
+    window.startTut = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'tutorial' }); };
+    window.startR1 = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'playing', currentRound: 1 }); };
+
+    render();
+  </script>
+</body>
+</html> + netGain.toFixed(0) + '</span></div></div></div><button id="submit-btn" style="width:100%;background:#4f46e5;color:white;padding:12px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:16px;">Submit Choice</button></div><div style="background:white;padding:24px;border-radius:8px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h3 style="font-weight:bold;font-size:20px;">🏠 Local Households</h3><div style="display:flex;align-items:center;gap:8px;"><span style="font-size:32px;">' + sentimentEmoji + '</span><span style="font-weight:bold;color:' + sentimentColor + ';">' + sentimentText + '</span></div></div><div style="display:flex;gap:16px;margin-bottom:16px;justify-content:center;"><div style="font-size:40px;">🏠</div><div style="font-size:40px;">🏠</div><div style="font-size:40px;">🏠</div><div style="font-size:40px;">🏠</div><div style="font-size:40px;">🏠</div></div><div style="background:#f3f4f6;border-left:4px solid #60a5fa;padding:12px;margin-bottom:8px;"><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:14px;">Household Bill:</span><span style="font-size:24px;font-weight:bold;" id="house-bill-val">
+
+    window.goHome = function() { state.view = 'home'; render(); };
+    window.goInstructor = function() { state.view = 'instructor'; render(); };
+    window.goStudent = function() { state.view = 'student'; render(); };
+
+    window.createRoom = async function() {
+      var code = 'ALPHA' + Math.floor(Math.random() * 100);
+      await db.ref('rooms/' + code).set({ code: code, players: {}, currentRound: 1, gameState: 'lobby' });
+      alert('Room: ' + code);
+      render();
+    };
+
+    function loadRooms() {
+      db.ref('rooms').on('value', function(snap) {
+        var data = snap.val();
+        var list = document.getElementById('rooms-list');
+        if (!list) return;
+        if (!data) { list.innerHTML = 'No rooms'; return; }
+        var html = '';
+        Object.keys(data).forEach(function(code) {
+          var room = data[code];
+          var count = room.players ? Object.keys(room.players).length : 0;
+          var gs = room.gameState || 'lobby';
+          html += '<div class="border rounded p-4 mb-4"><div class="flex justify-between mb-2"><span class="text-2xl font-bold">' + code + '</span><span>' + count + ' students</span></div><div class="flex gap-2"><button onclick="startTut(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'lobby' ? 'bg-blue-600 text-white' : 'bg-gray-300') + '">Tutorial</button><button onclick="startR1(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'tutorial' ? 'bg-green-600 text-white' : 'bg-gray-300') + '">Round 1</button></div></div>';
+        });
+        list.innerHTML = html;
+      });
+    }
+
+    window.joinRoom = async function() {
+      var name = document.getElementById('input-name').value;
+      var code = document.getElementById('input-room').value.toUpperCase();
+      if (!name || !code) { alert('Enter name and code'); return; }
+      
+      var snap = await db.ref('rooms/' + code).once('value');
+      if (!snap.exists()) { alert('Room not found'); return; }
+      
+      var room = snap.val();
+      var players = room.players || {};
+      
+      // Check if this player name already exists
+      var existingPlayer = null;
+      Object.keys(players).forEach(function(pid) {
+        if (players[pid].name === name) {
+          existingPlayer = players[pid];
+        }
+      });
+      
+      var playerId;
+      if (existingPlayer) {
+        playerId = existingPlayer.id;
+        alert('Rejoining as ' + name);
+      } else {
+        playerId = Date.now().toString();
+        await db.ref('rooms/' + code + '/players/' + playerId).set({ 
+          id: playerId, 
+          name: name, 
+          production: 50, 
+          submitted: false,
+          isEliminated: false
+        });
+      }
+      
+      state.playerName = name;
+      state.playerId = playerId;
+      state.roomCode = code;
+      state.view = 'lobby';
+      
+      db.ref('rooms/' + code).on('value', function(s) {
+        state.currentRoom = s.val();
+        if (state.currentRoom.gameState === 'tutorial' && state.view === 'lobby') { 
+          state.view = 'tutorial'; 
+          render(); 
+        } else if (state.currentRoom.gameState === 'playing' && state.view === 'tutorial') { 
+          state.view = 'gameplay'; 
+          render(); 
+        }
+      });
+      
+      render();
+    };
+
+    window.startTut = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'tutorial' }); };
+    window.startR1 = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'playing', currentRound: 1 }); };
+
+    render();
+  </script>
+</body>
+</html> + householdBill.toFixed(0) + '</span></div></div><div style="background:#fef3c7;border-left:4px solid #eab308;padding:12px;"><p style="font-size:14px;margin:0;">💬 ' + billMsg + '</p></div></div></div></div></div>';
+        
+        setTimeout(function() {
+          var slider = document.getElementById('prod-slider');
+          var submitBtn = document.getElementById('submit-btn');
+          
+          if (slider) {
+            slider.oninput = function() {
+              var val = Number(this.value);
+              state.production = val;
+              
+              var newTotal = 0;
+              activePlayers.forEach(function(p) {
+                if (p.id === state.playerId) {
+                  newTotal += val;
+                } else {
+                  newTotal += p.production;
+                }
+              });
+              
+              var newBill = 50 + (newTotal * 0.5);
+              var newProfit = val * 10;
+              var newNet = newProfit - newBill;
+              
+              document.getElementById('prod-val').textContent = val;
+              document.getElementById('profit-val').textContent = '
+
+    window.goHome = function() { state.view = 'home'; render(); };
+    window.goInstructor = function() { state.view = 'instructor'; render(); };
+    window.goStudent = function() { state.view = 'student'; render(); };
+
+    window.createRoom = async function() {
+      var code = 'ALPHA' + Math.floor(Math.random() * 100);
+      await db.ref('rooms/' + code).set({ code: code, players: {}, currentRound: 1, gameState: 'lobby' });
+      alert('Room: ' + code);
+      render();
+    };
+
+    function loadRooms() {
+      db.ref('rooms').on('value', function(snap) {
+        var data = snap.val();
+        var list = document.getElementById('rooms-list');
+        if (!list) return;
+        if (!data) { list.innerHTML = 'No rooms'; return; }
+        var html = '';
+        Object.keys(data).forEach(function(code) {
+          var room = data[code];
+          var count = room.players ? Object.keys(room.players).length : 0;
+          var gs = room.gameState || 'lobby';
+          html += '<div class="border rounded p-4 mb-4"><div class="flex justify-between mb-2"><span class="text-2xl font-bold">' + code + '</span><span>' + count + ' students</span></div><div class="flex gap-2"><button onclick="startTut(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'lobby' ? 'bg-blue-600 text-white' : 'bg-gray-300') + '">Tutorial</button><button onclick="startR1(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'tutorial' ? 'bg-green-600 text-white' : 'bg-gray-300') + '">Round 1</button></div></div>';
+        });
+        list.innerHTML = html;
+      });
+    }
+
+    window.joinRoom = async function() {
+      var name = document.getElementById('input-name').value;
+      var code = document.getElementById('input-room').value.toUpperCase();
+      if (!name || !code) { alert('Enter name and code'); return; }
+      
+      var snap = await db.ref('rooms/' + code).once('value');
+      if (!snap.exists()) { alert('Room not found'); return; }
+      
+      var room = snap.val();
+      var players = room.players || {};
+      
+      // Check if this player name already exists
+      var existingPlayer = null;
+      Object.keys(players).forEach(function(pid) {
+        if (players[pid].name === name) {
+          existingPlayer = players[pid];
+        }
+      });
+      
+      var playerId;
+      if (existingPlayer) {
+        playerId = existingPlayer.id;
+        alert('Rejoining as ' + name);
+      } else {
+        playerId = Date.now().toString();
+        await db.ref('rooms/' + code + '/players/' + playerId).set({ 
+          id: playerId, 
+          name: name, 
+          production: 50, 
+          submitted: false,
+          isEliminated: false
+        });
+      }
+      
+      state.playerName = name;
+      state.playerId = playerId;
+      state.roomCode = code;
+      state.view = 'lobby';
+      
+      db.ref('rooms/' + code).on('value', function(s) {
+        state.currentRoom = s.val();
+        if (state.currentRoom.gameState === 'tutorial' && state.view === 'lobby') { 
+          state.view = 'tutorial'; 
+          render(); 
+        } else if (state.currentRoom.gameState === 'playing' && state.view === 'tutorial') { 
+          state.view = 'gameplay'; 
+          render(); 
+        }
+      });
+      
+      render();
+    };
+
+    window.startTut = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'tutorial' }); };
+    window.startR1 = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'playing', currentRound: 1 }); };
+
+    render();
+  </script>
+</body>
+</html> + newProfit;
+              document.getElementById('bill-val').textContent = '-
+
+    window.goHome = function() { state.view = 'home'; render(); };
+    window.goInstructor = function() { state.view = 'instructor'; render(); };
+    window.goStudent = function() { state.view = 'student'; render(); };
+
+    window.createRoom = async function() {
+      var code = 'ALPHA' + Math.floor(Math.random() * 100);
+      await db.ref('rooms/' + code).set({ code: code, players: {}, currentRound: 1, gameState: 'lobby' });
+      alert('Room: ' + code);
+      render();
+    };
+
+    function loadRooms() {
+      db.ref('rooms').on('value', function(snap) {
+        var data = snap.val();
+        var list = document.getElementById('rooms-list');
+        if (!list) return;
+        if (!data) { list.innerHTML = 'No rooms'; return; }
+        var html = '';
+        Object.keys(data).forEach(function(code) {
+          var room = data[code];
+          var count = room.players ? Object.keys(room.players).length : 0;
+          var gs = room.gameState || 'lobby';
+          html += '<div class="border rounded p-4 mb-4"><div class="flex justify-between mb-2"><span class="text-2xl font-bold">' + code + '</span><span>' + count + ' students</span></div><div class="flex gap-2"><button onclick="startTut(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'lobby' ? 'bg-blue-600 text-white' : 'bg-gray-300') + '">Tutorial</button><button onclick="startR1(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'tutorial' ? 'bg-green-600 text-white' : 'bg-gray-300') + '">Round 1</button></div></div>';
+        });
+        list.innerHTML = html;
+      });
+    }
+
+    window.joinRoom = async function() {
+      var name = document.getElementById('input-name').value;
+      var code = document.getElementById('input-room').value.toUpperCase();
+      if (!name || !code) { alert('Enter name and code'); return; }
+      
+      var snap = await db.ref('rooms/' + code).once('value');
+      if (!snap.exists()) { alert('Room not found'); return; }
+      
+      var room = snap.val();
+      var players = room.players || {};
+      
+      // Check if this player name already exists
+      var existingPlayer = null;
+      Object.keys(players).forEach(function(pid) {
+        if (players[pid].name === name) {
+          existingPlayer = players[pid];
+        }
+      });
+      
+      var playerId;
+      if (existingPlayer) {
+        playerId = existingPlayer.id;
+        alert('Rejoining as ' + name);
+      } else {
+        playerId = Date.now().toString();
+        await db.ref('rooms/' + code + '/players/' + playerId).set({ 
+          id: playerId, 
+          name: name, 
+          production: 50, 
+          submitted: false,
+          isEliminated: false
+        });
+      }
+      
+      state.playerName = name;
+      state.playerId = playerId;
+      state.roomCode = code;
+      state.view = 'lobby';
+      
+      db.ref('rooms/' + code).on('value', function(s) {
+        state.currentRoom = s.val();
+        if (state.currentRoom.gameState === 'tutorial' && state.view === 'lobby') { 
+          state.view = 'tutorial'; 
+          render(); 
+        } else if (state.currentRoom.gameState === 'playing' && state.view === 'tutorial') { 
+          state.view = 'gameplay'; 
+          render(); 
+        }
+      });
+      
+      render();
+    };
+
+    window.startTut = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'tutorial' }); };
+    window.startR1 = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'playing', currentRound: 1 }); };
+
+    render();
+  </script>
+</body>
+</html> + newBill.toFixed(0);
+              document.getElementById('net-val').textContent = '
+
+    window.goHome = function() { state.view = 'home'; render(); };
+    window.goInstructor = function() { state.view = 'instructor'; render(); };
+    window.goStudent = function() { state.view = 'student'; render(); };
+
+    window.createRoom = async function() {
+      var code = 'ALPHA' + Math.floor(Math.random() * 100);
+      await db.ref('rooms/' + code).set({ code: code, players: {}, currentRound: 1, gameState: 'lobby' });
+      alert('Room: ' + code);
+      render();
+    };
+
+    function loadRooms() {
+      db.ref('rooms').on('value', function(snap) {
+        var data = snap.val();
+        var list = document.getElementById('rooms-list');
+        if (!list) return;
+        if (!data) { list.innerHTML = 'No rooms'; return; }
+        var html = '';
+        Object.keys(data).forEach(function(code) {
+          var room = data[code];
+          var count = room.players ? Object.keys(room.players).length : 0;
+          var gs = room.gameState || 'lobby';
+          html += '<div class="border rounded p-4 mb-4"><div class="flex justify-between mb-2"><span class="text-2xl font-bold">' + code + '</span><span>' + count + ' students</span></div><div class="flex gap-2"><button onclick="startTut(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'lobby' ? 'bg-blue-600 text-white' : 'bg-gray-300') + '">Tutorial</button><button onclick="startR1(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'tutorial' ? 'bg-green-600 text-white' : 'bg-gray-300') + '">Round 1</button></div></div>';
+        });
+        list.innerHTML = html;
+      });
+    }
+
+    window.joinRoom = async function() {
+      var name = document.getElementById('input-name').value;
+      var code = document.getElementById('input-room').value.toUpperCase();
+      if (!name || !code) { alert('Enter name and code'); return; }
+      
+      var snap = await db.ref('rooms/' + code).once('value');
+      if (!snap.exists()) { alert('Room not found'); return; }
+      
+      var room = snap.val();
+      var players = room.players || {};
+      
+      // Check if this player name already exists
+      var existingPlayer = null;
+      Object.keys(players).forEach(function(pid) {
+        if (players[pid].name === name) {
+          existingPlayer = players[pid];
+        }
+      });
+      
+      var playerId;
+      if (existingPlayer) {
+        playerId = existingPlayer.id;
+        alert('Rejoining as ' + name);
+      } else {
+        playerId = Date.now().toString();
+        await db.ref('rooms/' + code + '/players/' + playerId).set({ 
+          id: playerId, 
+          name: name, 
+          production: 50, 
+          submitted: false,
+          isEliminated: false
+        });
+      }
+      
+      state.playerName = name;
+      state.playerId = playerId;
+      state.roomCode = code;
+      state.view = 'lobby';
+      
+      db.ref('rooms/' + code).on('value', function(s) {
+        state.currentRoom = s.val();
+        if (state.currentRoom.gameState === 'tutorial' && state.view === 'lobby') { 
+          state.view = 'tutorial'; 
+          render(); 
+        } else if (state.currentRoom.gameState === 'playing' && state.view === 'tutorial') { 
+          state.view = 'gameplay'; 
+          render(); 
+        }
+      });
+      
+      render();
+    };
+
+    window.startTut = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'tutorial' }); };
+    window.startR1 = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'playing', currentRound: 1 }); };
+
+    render();
+  </script>
+</body>
+</html> + newNet.toFixed(0);
+              document.getElementById('net-val').style.color = newNet > 0 ? '#10b981' : '#ef4444';
+              document.getElementById('house-bill-val').textContent = '
+
+    window.goHome = function() { state.view = 'home'; render(); };
+    window.goInstructor = function() { state.view = 'instructor'; render(); };
+    window.goStudent = function() { state.view = 'student'; render(); };
+
+    window.createRoom = async function() {
+      var code = 'ALPHA' + Math.floor(Math.random() * 100);
+      await db.ref('rooms/' + code).set({ code: code, players: {}, currentRound: 1, gameState: 'lobby' });
+      alert('Room: ' + code);
+      render();
+    };
+
+    function loadRooms() {
+      db.ref('rooms').on('value', function(snap) {
+        var data = snap.val();
+        var list = document.getElementById('rooms-list');
+        if (!list) return;
+        if (!data) { list.innerHTML = 'No rooms'; return; }
+        var html = '';
+        Object.keys(data).forEach(function(code) {
+          var room = data[code];
+          var count = room.players ? Object.keys(room.players).length : 0;
+          var gs = room.gameState || 'lobby';
+          html += '<div class="border rounded p-4 mb-4"><div class="flex justify-between mb-2"><span class="text-2xl font-bold">' + code + '</span><span>' + count + ' students</span></div><div class="flex gap-2"><button onclick="startTut(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'lobby' ? 'bg-blue-600 text-white' : 'bg-gray-300') + '">Tutorial</button><button onclick="startR1(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'tutorial' ? 'bg-green-600 text-white' : 'bg-gray-300') + '">Round 1</button></div></div>';
+        });
+        list.innerHTML = html;
+      });
+    }
+
+    window.joinRoom = async function() {
+      var name = document.getElementById('input-name').value;
+      var code = document.getElementById('input-room').value.toUpperCase();
+      if (!name || !code) { alert('Enter name and code'); return; }
+      
+      var snap = await db.ref('rooms/' + code).once('value');
+      if (!snap.exists()) { alert('Room not found'); return; }
+      
+      var room = snap.val();
+      var players = room.players || {};
+      
+      // Check if this player name already exists
+      var existingPlayer = null;
+      Object.keys(players).forEach(function(pid) {
+        if (players[pid].name === name) {
+          existingPlayer = players[pid];
+        }
+      });
+      
+      var playerId;
+      if (existingPlayer) {
+        playerId = existingPlayer.id;
+        alert('Rejoining as ' + name);
+      } else {
+        playerId = Date.now().toString();
+        await db.ref('rooms/' + code + '/players/' + playerId).set({ 
+          id: playerId, 
+          name: name, 
+          production: 50, 
+          submitted: false,
+          isEliminated: false
+        });
+      }
+      
+      state.playerName = name;
+      state.playerId = playerId;
+      state.roomCode = code;
+      state.view = 'lobby';
+      
+      db.ref('rooms/' + code).on('value', function(s) {
+        state.currentRoom = s.val();
+        if (state.currentRoom.gameState === 'tutorial' && state.view === 'lobby') { 
+          state.view = 'tutorial'; 
+          render(); 
+        } else if (state.currentRoom.gameState === 'playing' && state.view === 'tutorial') { 
+          state.view = 'gameplay'; 
+          render(); 
+        }
+      });
+      
+      render();
+    };
+
+    window.startTut = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'tutorial' }); };
+    window.startR1 = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'playing', currentRound: 1 }); };
+
+    render();
+  </script>
+</body>
+</html> + newBill.toFixed(0);
+            };
+          }
+          
+          if (submitBtn) {
+            submitBtn.onclick = async function() {
+              if (!state.playerId || !state.roomCode) return;
+              await db.ref('rooms/' + state.roomCode + '/players/' + state.playerId).update({
+                production: state.production,
+                submitted: true
+              });
+              alert('Submitted!');
+              submitBtn.disabled = true;
+              submitBtn.style.background = '#9ca3af';
+              if (slider) slider.disabled = true;
+            };
+          }
+        }, 100);
+      }
+    }
+
+    window.goHome = function() { state.view = 'home'; render(); };
+    window.goInstructor = function() { state.view = 'instructor'; render(); };
+    window.goStudent = function() { state.view = 'student'; render(); };
+
+    window.createRoom = async function() {
+      var code = 'ALPHA' + Math.floor(Math.random() * 100);
+      await db.ref('rooms/' + code).set({ code: code, players: {}, currentRound: 1, gameState: 'lobby' });
+      alert('Room: ' + code);
+      render();
+    };
+
+    function loadRooms() {
+      db.ref('rooms').on('value', function(snap) {
+        var data = snap.val();
+        var list = document.getElementById('rooms-list');
+        if (!list) return;
+        if (!data) { list.innerHTML = 'No rooms'; return; }
+        var html = '';
+        Object.keys(data).forEach(function(code) {
+          var room = data[code];
+          var count = room.players ? Object.keys(room.players).length : 0;
+          var gs = room.gameState || 'lobby';
+          html += '<div class="border rounded p-4 mb-4"><div class="flex justify-between mb-2"><span class="text-2xl font-bold">' + code + '</span><span>' + count + ' students</span></div><div class="flex gap-2"><button onclick="startTut(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'lobby' ? 'bg-blue-600 text-white' : 'bg-gray-300') + '">Tutorial</button><button onclick="startR1(\'' + code + '\')" class="px-4 py-2 rounded ' + (gs === 'tutorial' ? 'bg-green-600 text-white' : 'bg-gray-300') + '">Round 1</button></div></div>';
+        });
+        list.innerHTML = html;
+      });
+    }
+
+    window.joinRoom = async function() {
+      var name = document.getElementById('input-name').value;
+      var code = document.getElementById('input-room').value.toUpperCase();
+      if (!name || !code) { alert('Enter name and code'); return; }
+      
+      var snap = await db.ref('rooms/' + code).once('value');
+      if (!snap.exists()) { alert('Room not found'); return; }
+      
+      var room = snap.val();
+      var players = room.players || {};
+      
+      // Check if this player name already exists
+      var existingPlayer = null;
+      Object.keys(players).forEach(function(pid) {
+        if (players[pid].name === name) {
+          existingPlayer = players[pid];
+        }
+      });
+      
+      var playerId;
+      if (existingPlayer) {
+        playerId = existingPlayer.id;
+        alert('Rejoining as ' + name);
+      } else {
+        playerId = Date.now().toString();
+        await db.ref('rooms/' + code + '/players/' + playerId).set({ 
+          id: playerId, 
+          name: name, 
+          production: 50, 
+          submitted: false,
+          isEliminated: false
+        });
+      }
+      
+      state.playerName = name;
+      state.playerId = playerId;
+      state.roomCode = code;
+      state.view = 'lobby';
+      
+      db.ref('rooms/' + code).on('value', function(s) {
+        state.currentRoom = s.val();
+        if (state.currentRoom.gameState === 'tutorial' && state.view === 'lobby') { 
+          state.view = 'tutorial'; 
+          render(); 
+        } else if (state.currentRoom.gameState === 'playing' && state.view === 'tutorial') { 
+          state.view = 'gameplay'; 
+          render(); 
+        }
+      });
+      
+      render();
+    };
+
+    window.startTut = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'tutorial' }); };
+    window.startR1 = async function(code) { await db.ref('rooms/' + code).update({ gameState: 'playing', currentRound: 1 }); };
+
+    render();
+  </script>
+</body>
+</html>
