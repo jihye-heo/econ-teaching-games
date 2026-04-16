@@ -1,0 +1,2150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coffee Bean Trade Policy — ECON 326</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf7f2;
+    --paper: #fffef9;
+    --ink: #1a1208;
+    --brown: #6b3a1f;
+    --brown-light: #a0622a;
+    --brown-pale: #e8d5b7;
+    --cream: #f5ead6;
+    --green: #2d5a27;
+    --green-light: #4a8c3f;
+    --red: #8b1a1a;
+    --gold: #c9952a;
+    --gold-light: #f0d080;
+    --blue: #1a3a5c;
+    --shadow: rgba(107,58,31,0.15);
+    --cs-color: #4a8c3f;
+    --ps-color: #c9952a;
+    --tr-color: #1a3a5c;
+    --dwl-color: #8b1a1a;
+    --quota-color: #6b3a8f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* Subtle paper texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 48px 0 32px;
+    border-bottom: 2px solid var(--brown-pale);
+    margin-bottom: 40px;
+  }
+
+  .course-tag {
+    font-family: 'Source Serif 4', serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--brown-light);
+    margin-bottom: 12px;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 900;
+    color: var(--brown);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  header h1 span {
+    color: var(--brown-light);
+    font-style: italic;
+  }
+
+  header p {
+    color: #6b5a3e;
+    font-size: 15px;
+    font-style: italic;
+  }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 40px;
+    border: 1.5px solid var(--brown-pale);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-step {
+    flex: 1;
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #a08060;
+    background: var(--paper);
+    border-right: 1.5px solid var(--brown-pale);
+    transition: all 0.4s ease;
+    cursor: default;
+  }
+  .progress-step:last-child { border-right: none; }
+  .progress-step.active {
+    background: var(--brown);
+    color: #fff8ee;
+  }
+  .progress-step.done {
+    background: var(--brown-pale);
+    color: var(--brown);
+  }
+  .progress-step .step-num {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 2px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--paper);
+    border: 1.5px solid var(--brown-pale);
+    border-radius: 6px;
+    padding: 32px;
+    margin-bottom: 28px;
+    box-shadow: 0 2px 12px var(--shadow);
+    animation: slideIn 0.4s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--brown-pale);
+  }
+
+  .act-badge {
+    background: var(--brown);
+    color: #fff8ee;
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    white-space: nowrap;
+    margin-top: 3px;
+  }
+
+  .act-badge.bridge { background: var(--blue); }
+  .act-badge.quota { background: var(--quota-color); }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  .card-title small {
+    display: block;
+    font-family: 'Source Serif 4', serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: #7a6040;
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  /* SETUP BOX */
+  .setup-box {
+    background: var(--cream);
+    border-left: 4px solid var(--brown);
+    padding: 16px 20px;
+    border-radius: 0 4px 4px 0;
+    margin-bottom: 24px;
+  }
+
+  .setup-box h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--brown);
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  .setup-box p, .setup-box li {
+    font-size: 14px;
+    color: #4a3520;
+    line-height: 1.7;
+  }
+
+  .setup-box ul { padding-left: 18px; }
+
+  .eq-block {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    color: var(--brown);
+    background: #fff8ee;
+    border: 1px solid var(--brown-pale);
+    padding: 10px 16px;
+    border-radius: 4px;
+    display: inline-block;
+    margin: 4px 4px;
+  }
+
+  /* GRAPH */
+  .graph-container {
+    background: #fff;
+    border: 1.5px solid var(--brown-pale);
+    border-radius: 6px;
+    padding: 16px;
+    margin: 24px 0;
+    overflow-x: auto;
+  }
+
+  svg text { font-family: 'Source Serif 4', Georgia, serif; }
+
+  /* QUESTIONS */
+  .questions-section { margin-top: 20px; }
+
+  .question-block {
+    border: 1.5px solid var(--brown-pale);
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 16px;
+    background: var(--paper);
+    transition: border-color 0.3s;
+  }
+
+  .question-block.correct { border-color: var(--green-light); background: #f4faf2; }
+  .question-block.incorrect { border-color: var(--red); background: #fff5f5; }
+  .question-block.locked { opacity: 0.45; pointer-events: none; }
+
+  .q-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--brown-light);
+    margin-bottom: 6px;
+  }
+
+  .q-text {
+    font-size: 15px;
+    color: var(--ink);
+    margin-bottom: 12px;
+    line-height: 1.6;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .answer-input {
+    border: 1.5px solid var(--brown-pale);
+    border-radius: 4px;
+    padding: 8px 14px;
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    width: 120px;
+    color: var(--ink);
+    background: #fff;
+    transition: border-color 0.2s;
+  }
+
+  .answer-input:focus {
+    outline: none;
+    border-color: var(--brown);
+  }
+
+  .answer-input.correct-input { border-color: var(--green-light); background: #f4faf2; }
+  .answer-input.wrong-input { border-color: var(--red); background: #fff5f5; }
+
+  .check-btn {
+    background: var(--brown);
+    color: #fff8ee;
+    border: none;
+    padding: 9px 20px;
+    border-radius: 4px;
+    font-family: 'Source Serif 4', serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+  }
+  .check-btn:hover { background: var(--brown-light); }
+
+  .feedback {
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 10px 14px;
+    border-radius: 4px;
+  }
+  .feedback.correct-msg { background: #e8f5e4; color: var(--green); border-left: 3px solid var(--green-light); }
+  .feedback.hint-msg { background: #fff3cd; color: #7a4f00; border-left: 3px solid var(--gold); }
+  .feedback.wrong-msg { background: #fde8e8; color: var(--red); border-left: 3px solid var(--red); }
+
+  .correct-check { color: var(--green-light); font-size: 18px; margin-left: 6px; }
+
+  /* CONTINUE BUTTON */
+  .continue-btn {
+    background: var(--green);
+    color: #fff;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 4px;
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: block;
+    margin: 28px auto 0;
+    letter-spacing: 0.5px;
+    transition: background 0.2s, transform 0.1s;
+    box-shadow: 0 3px 10px rgba(45,90,39,0.25);
+  }
+  .continue-btn:hover { background: var(--green-light); transform: translateY(-1px); }
+  .continue-btn:disabled { background: #aaa; box-shadow: none; cursor: default; transform: none; }
+
+  /* BRIDGE MC */
+  .mc-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .mc-option {
+    border: 2px solid var(--brown-pale);
+    border-radius: 6px;
+    padding: 12px;
+    cursor: pointer;
+    background: var(--paper);
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .mc-option:hover { border-color: var(--brown-light); background: var(--cream); }
+  .mc-option.selected-correct { border-color: var(--green-light); background: #f4faf2; }
+  .mc-option.selected-wrong { border-color: var(--red); background: #fff5f5; }
+  .mc-option .option-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--brown);
+    margin-bottom: 6px;
+  }
+
+  /* WELFARE TABLE */
+  .welfare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 14px;
+  }
+  .welfare-table th {
+    background: var(--brown);
+    color: #fff8ee;
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .welfare-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--brown-pale);
+  }
+  .welfare-table tr:nth-child(even) td { background: var(--cream); }
+  .welfare-table .total-row td {
+    font-weight: 600;
+    background: var(--brown-pale) !important;
+    border-top: 2px solid var(--brown-light);
+  }
+  .welfare-table .pos { color: var(--green); }
+  .welfare-table .neg { color: var(--red); }
+
+  /* QUOTA TABS */
+  .quota-tabs {
+    display: flex;
+    gap: 0;
+    border: 1.5px solid var(--brown-pale);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .quota-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--paper);
+    color: #8a6040;
+    border-right: 1.5px solid var(--brown-pale);
+    transition: all 0.2s;
+  }
+  .quota-tab:last-child { border-right: none; }
+  .quota-tab.active { background: var(--quota-color); color: #fff; }
+
+  /* LOBBY ALERT */
+  .lobby-alert {
+    background: linear-gradient(135deg, #3d1a00, #7a3a0a);
+    color: #fff8ee;
+    border-radius: 6px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+    animation: alertPulse 0.5s ease;
+  }
+
+  @keyframes alertPulse {
+    0% { transform: scale(0.97); opacity: 0; }
+    60% { transform: scale(1.01); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .lobby-alert::before {
+    content: '☕';
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 60px;
+    opacity: 0.15;
+  }
+
+  .lobby-alert .alert-tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    margin-bottom: 6px;
+  }
+
+  .lobby-alert h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+
+  .lobby-alert p {
+    font-size: 14px;
+    opacity: 0.9;
+    line-height: 1.6;
+  }
+
+  /* HIDDEN SECTIONS */
+  .hidden { display: none; }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 8px 0 0;
+    font-size: 12px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* SUMMARY BANNER */
+  .summary-banner {
+    background: linear-gradient(135deg, var(--green), #4a8c3f);
+    color: #fff;
+    border-radius: 6px;
+    padding: 20px 28px;
+    text-align: center;
+    margin-top: 20px;
+  }
+  .summary-banner h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+  .summary-banner p { font-size: 14px; opacity: 0.9; }
+
+  @media (max-width: 600px) {
+    .mc-options { grid-template-columns: 1fr; }
+    .card { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="course-tag">ECON 326 · International Trade · Small Country Model</div>
+    <h1>The <span>Coffee Bean</span> Trade Game</h1>
+    <p>Tariffs, Quotas, and the Politics of Protection</p>
+  </header>
+
+  <!-- PROGRESS -->
+  <div class="progress-bar">
+    <div class="progress-step active" id="prog-1">
+      <span class="step-num">①</span>Free Trade
+    </div>
+    <div class="progress-step" id="prog-bridge">
+      <span class="step-num">②</span>Specific vs. Ad Valorem
+    </div>
+    <div class="progress-step" id="prog-2">
+      <span class="step-num">③</span>Tariff
+    </div>
+    <div class="progress-step" id="prog-3">
+      <span class="step-num">④</span>Quota
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ACT 1: FREE TRADE -->
+  <!-- ============================================================ -->
+  <div class="card" id="act1">
+    <div class="card-header">
+      <div class="act-badge">ACT 1</div>
+      <div class="card-title">Free Trade Equilibrium
+        <small>Establish the baseline before any policy intervention</small>
+      </div>
+    </div>
+
+    <div class="setup-box">
+      <h3>Market Setup — Home Country Coffee Bean Market</h3>
+      <p style="margin-bottom:10px">Home is a <strong>small country</strong>: it cannot affect the world price of coffee beans.</p>
+      <div style="margin: 10px 0">
+        <span class="eq-block">Q<sup>S</sup> = −20 + 4P &nbsp;|&nbsp; P = 5 + Q/4</span>
+        <span class="eq-block">Q<sup>D</sup> = 300 − 4P &nbsp;|&nbsp; P = 75 − Q/4</span>
+        <span class="eq-block">P<sup>World</sup> = $20/bag</span>
+      </div>
+      <p style="margin-top:10px; font-size:13px; font-style:italic; color:#6b5030">
+        P is in $/bag · Q is in million bags per year
+      </p>
+    </div>
+
+    <div class="graph-container">
+      <svg id="svg-ft" viewBox="0 0 560 360" width="100%" style="max-height:360px">
+      </svg>
+      <div class="legend" id="legend-ft"></div>
+    </div>
+
+    <div class="questions-section">
+      <p style="font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--brown-light); margin-bottom:14px">
+        Calculate the free trade equilibrium — enter your answers below:
+      </p>
+
+      <!-- Q1a: Autarky -->
+      <div class="question-block" id="qb-1a">
+        <div class="q-label">Step 1 of 5</div>
+        <div class="q-text">What is the autarky equilibrium price and quantity?
+          <br><span style="font-size:13px; color:#6b5030; font-style:italic">Set Q<sup>S</sup> = Q<sup>D</sup> and solve.</span>
+        </div>
+        <div class="input-row">
+          <span style="font-size:14px">P* = $</span>
+          <input class="answer-input" id="in-1a-p" type="number" placeholder="?">
+          <span style="font-size:14px">, &nbsp; Q* =</span>
+          <input class="answer-input" id="in-1a-q" type="number" placeholder="?">
+          <button class="check-btn" onclick="check1a()">Check</button>
+        </div>
+        <div class="feedback hidden" id="fb-1a"></div>
+      </div>
+
+      <!-- Q1b: Free trade quantities -->
+      <div class="question-block locked" id="qb-1b">
+        <div class="q-label">Step 2 of 5</div>
+        <div class="q-text">At the world price P<sup>W</sup> = $20, find domestic quantity supplied and demanded.
+        </div>
+        <div class="input-row">
+          <span style="font-size:14px">Q<sup>S</sup> =</span>
+          <input class="answer-input" id="in-1b-qs" type="number" placeholder="?">
+          <span style="font-size:14px">, &nbsp; Q<sup>D</sup> =</span>
+          <input class="answer-input" id="in-1b-qd" type="number" placeholder="?">
+          <button class="check-btn" onclick="check1b()">Check</button>
+        </div>
+        <div class="feedback hidden" id="fb-1b"></div>
+      </div>
+
+      <!-- Q1c: Imports -->
+      <div class="question-block locked" id="qb-1c">
+        <div class="q-label">Step 3 of 5</div>
+        <div class="q-text">How many bags does Home <em>import</em> under free trade?</div>
+        <div class="input-row">
+          <span style="font-size:14px">Imports =</span>
+          <input class="answer-input" id="in-1c" type="number" placeholder="?">
+          <button class="check-btn" onclick="check1c()">Check</button>
+        </div>
+        <div class="feedback hidden" id="fb-1c"></div>
+      </div>
+
+      <!-- Q1d: CS and PS -->
+      <div class="question-block locked" id="qb-1d">
+        <div class="q-label">Step 4 of 5</div>
+        <div class="q-text">Calculate Consumer Surplus and Producer Surplus under free trade.
+          <br><span style="font-size:13px; color:#6b5030; font-style:italic">
+            Hint: CS = ½ × (P<sub>max</sub> − P<sup>W</sup>) × Q<sup>D</sup> &nbsp;|&nbsp; PS = ½ × (P<sup>W</sup> − P<sub>min</sub>) × Q<sup>S</sup>
+            <br>P<sub>max</sub> is the demand intercept. P<sub>min</sub> is the supply intercept (what P gives Q<sup>S</sup>=0?).
+          </span>
+        </div>
+        <div class="input-row">
+          <span style="font-size:14px">CS = $</span>
+          <input class="answer-input" id="in-1d-cs" type="number" placeholder="?">
+          <span style="font-size:14px">, &nbsp; PS = $</span>
+          <input class="answer-input" id="in-1d-ps" type="number" placeholder="?">
+          <button class="check-btn" onclick="check1d()">Check</button>
+        </div>
+        <div class="feedback hidden" id="fb-1d"></div>
+      </div>
+
+      <!-- Q1e: Total Welfare -->
+      <div class="question-block locked" id="qb-1e">
+        <div class="q-label">Step 5 of 5</div>
+        <div class="q-text">What is total Home welfare under free trade?</div>
+        <div class="input-row">
+          <span style="font-size:14px">TW = $</span>
+          <input class="answer-input" id="in-1e" type="number" placeholder="?">
+          <button class="check-btn" onclick="check1e()">Check</button>
+        </div>
+        <div class="feedback hidden" id="fb-1e"></div>
+      </div>
+    </div>
+
+    <button class="continue-btn" id="btn-act1" disabled onclick="goToBridge()">
+      Continue to Act 2 →
+    </button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ACT 2: SPECIFIC VS AD VALOREM (was BRIDGE) -->
+  <!-- ============================================================ -->
+  <div class="card hidden" id="act-bridge">
+    <div class="card-header">
+      <div class="act-badge bridge">ACT 2</div>
+      <div class="card-title">Specific vs. Ad Valorem Tariff
+        <small>Identify the correct policy before we calculate</small>
+      </div>
+    </div>
+
+    <div class="lobby-alert">
+      <div class="alert-tag">⚠ Breaking News</div>
+      <h3>The Coffee Farmers Association Is Lobbying!</h3>
+      <p>Domestic coffee farmers are suffering from cheap imports. They have successfully lobbied Congress for a tariff. The government announces an <strong>ad valorem tariff of t = 25%</strong>.</p>
+    </div>
+
+    <div class="setup-box">
+      <h3>Recall from Class</h3>
+      <p>In class, we analyzed a <strong>specific tariff</strong>: the domestic price rises by a fixed dollar amount, so P<sub>domestic</sub> = P<sup>W</sup> <strong>+ t</strong> (parallel upward shift of export supply curve).</p>
+      <p style="margin-top:8px">Today's policy is an <strong>ad valorem tariff</strong>: the domestic price is a percentage of the world price, so P<sub>domestic</sub> = P<sup>W</sup> <strong>× (1 + t)</strong>.</p>
+    </div>
+
+    <p style="font-size:15px; margin-bottom:16px; color:var(--ink)">
+      The four graphs below each show a horizontal export supply curve at P<sup>W</sup> = $20 and a potential new supply curve after the tariff. <strong>Which graph correctly illustrates the effect of a 25% ad valorem tariff?</strong>
+    </p>
+
+    <div class="mc-options" id="bridge-options">
+      <!-- Option A: correct — parallel shift by Pw*t = 5 -->
+      <div class="mc-option" id="mc-A" onclick="selectBridge('A')">
+        <div class="option-label">Graph A</div>
+        <svg viewBox="0 0 200 140" width="100%">
+          <line x1="30" y1="110" x2="180" y2="110" stroke="#999" stroke-width="1"/>
+          <line x1="30" y1="40" x2="180" y2="40" stroke="#999" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="100" y="106" text-anchor="middle" font-size="9" fill="#999">P<tspan dy="-3" font-size="7">W</tspan><tspan dy="3"> = $20</tspan></text>
+          <text x="100" y="36" text-anchor="middle" font-size="9" fill="#666">P<tspan dy="-3" font-size="7">W</tspan><tspan dy="3">×(1+t) = $25</tspan></text>
+          <line x1="20" y1="70" x2="20" y2="130" stroke="#888" stroke-width="1"/>
+          <text x="10" y="40" font-size="8" fill="#888" transform="rotate(-90 10 75)">P</text>
+          <line x1="20" y1="130" x2="185" y2="130" stroke="#888" stroke-width="1"/>
+          <text x="185" y="135" font-size="8" fill="#888">Q</text>
+          <text x="90" y="20" text-anchor="middle" font-size="8" fill="var(--green)" font-weight="bold">New price = P<tspan dy="-3" font-size="6">W</tspan><tspan dy="3">×1.25</tspan></text>
+        </svg>
+        <div style="font-size:11px; color:#555; margin-top:4px">New price = $20 × 1.25 = $25</div>
+      </div>
+
+      <!-- Option B: wrong — shifts up by fixed $10 -->
+      <div class="mc-option" id="mc-B" onclick="selectBridge('B')">
+        <div class="option-label">Graph B</div>
+        <svg viewBox="0 0 200 140" width="100%">
+          <line x1="30" y1="110" x2="180" y2="110" stroke="#999" stroke-width="1"/>
+          <line x1="30" y1="20" x2="180" y2="20" stroke="#999" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="100" y="106" text-anchor="middle" font-size="9" fill="#999">P<tspan dy="-3" font-size="7">W</tspan><tspan dy="3"> = $20</tspan></text>
+          <text x="100" y="16" text-anchor="middle" font-size="9" fill="#666">P<tspan dy="-3" font-size="7">W</tspan><tspan dy="3"> + $10</tspan></text>
+          <line x1="20" y1="70" x2="20" y2="130" stroke="#888" stroke-width="1"/>
+          <line x1="20" y1="130" x2="185" y2="130" stroke="#888" stroke-width="1"/>
+          <text x="185" y="135" font-size="8" fill="#888">Q</text>
+          <text x="90" y="8" text-anchor="middle" font-size="8" fill="var(--red)" font-weight="bold">New price = P<tspan dy="-3" font-size="6">W</tspan><tspan dy="3"> + $10</tspan></text>
+        </svg>
+        <div style="font-size:11px; color:#555; margin-top:4px">New price = $20 + $10 = $30</div>
+      </div>
+
+      <!-- Option C: wrong — downward sloping new curve -->
+      <div class="mc-option" id="mc-C" onclick="selectBridge('C')">
+        <div class="option-label">Graph C</div>
+        <svg viewBox="0 0 200 140" width="100%">
+          <line x1="30" y1="110" x2="180" y2="110" stroke="#999" stroke-width="1"/>
+          <line x1="30" y1="40" x2="180" y2="80" stroke="#999" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="100" y="106" text-anchor="middle" font-size="9" fill="#999">P<tspan dy="-3" font-size="7">W</tspan><tspan dy="3"> = $20</tspan></text>
+          <line x1="20" y1="70" x2="20" y2="130" stroke="#888" stroke-width="1"/>
+          <line x1="20" y1="130" x2="185" y2="130" stroke="#888" stroke-width="1"/>
+          <text x="185" y="135" font-size="8" fill="#888">Q</text>
+          <text x="90" y="20" text-anchor="middle" font-size="8" fill="var(--red)" font-weight="bold">Downward-sloping shift</text>
+        </svg>
+        <div style="font-size:11px; color:#555; margin-top:4px">Export supply slopes down after tariff</div>
+      </div>
+
+      <!-- Option D: wrong — supply curve rotates upward -->
+      <div class="mc-option" id="mc-D" onclick="selectBridge('D')">
+        <div class="option-label">Graph D</div>
+        <svg viewBox="0 0 200 140" width="100%">
+          <line x1="30" y1="110" x2="180" y2="110" stroke="#999" stroke-width="1"/>
+          <line x1="30" y1="110" x2="180" y2="30" stroke="#999" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="100" y="106" text-anchor="middle" font-size="9" fill="#999">P<tspan dy="-3" font-size="7">W</tspan><tspan dy="3"> = $20</tspan></text>
+          <line x1="20" y1="70" x2="20" y2="130" stroke="#888" stroke-width="1"/>
+          <line x1="20" y1="130" x2="185" y2="130" stroke="#888" stroke-width="1"/>
+          <text x="185" y="135" font-size="8" fill="#888">Q</text>
+          <text x="90" y="20" text-anchor="middle" font-size="8" fill="var(--red)" font-weight="bold">Supply rotates upward</text>
+        </svg>
+        <div style="font-size:11px; color:#555; margin-top:4px">Export supply rotates from horizontal</div>
+      </div>
+    </div>
+
+    <div class="feedback hidden" id="fb-bridge" style="margin-top:16px"></div>
+
+    <button class="continue-btn hidden" id="btn-bridge" onclick="goToBridgeLarge()">
+      Continue to Bonus Question →
+    </button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- BRIDGE 2: LARGE COUNTRY -->
+  <!-- ============================================================ -->
+  <div class="card hidden" id="act-bridge-large">
+    <div class="card-header">
+      <div class="act-badge bridge">ACT 2</div>
+      <div class="card-title">What if Home Were a Large Country?
+        <small>How does the export supply curve change under ad valorem tariff?</small>
+      </div>
+    </div>
+
+    <div class="setup-box">
+      <h3>Recall: Large vs. Small Country</h3>
+      <p>For a <strong>small country</strong>, the foreign export supply curve is <em>horizontal</em> — the world price is fixed no matter how much Home imports. That's why an ad valorem tariff just shifts the horizontal curve up by a fixed amount (P<sup>W</sup>×t).</p>
+      <p style="margin-top:8px">For a <strong>large country</strong>, foreign exporters must be offered a higher price to supply more — so the export supply curve is <em>upward sloping</em>. Now the ad valorem tariff (×(1+t)) multiplies every point on the curve by (1+t), so higher-priced points shift up <em>more</em> in absolute terms. The new curve is therefore <strong>steeper</strong> than a parallel shift.</p>
+    </div>
+
+    <p style="font-size:15px; margin-bottom:16px; color:var(--ink)">
+      <strong>Which graph correctly shows the effect of an ad valorem tariff when Home is a large country?</strong>
+      <br><span style="font-size:13px; color:#6b5030; font-style:italic">Each graph shows the original export supply curve (solid) and the post-tariff curve (dashed).</span>
+    </p>
+
+    <div class="mc-options" id="bridge-large-options">
+
+      <!-- Graph A: horizontal → horizontal (small country specific — wrong country) -->
+      <div class="mc-option" id="mc-LA" onclick="selectBridgeLarge('A')">
+        <div class="option-label">Graph A</div>
+        <svg viewBox="0 0 200 150" width="100%">
+          <line x1="20" y1="135" x2="190" y2="135" stroke="#888" stroke-width="1"/>
+          <line x1="20" y1="15" x2="20" y2="135" stroke="#888" stroke-width="1"/>
+          <text x="188" y="140" font-size="8" fill="#888">Q</text>
+          <text x="14" y="12" font-size="8" fill="#888">P</text>
+          <!-- horizontal original -->
+          <line x1="30" y1="105" x2="175" y2="105" stroke="#1a3a5c" stroke-width="2"/>
+          <text x="177" y="108" font-size="8" fill="#1a3a5c">ES</text>
+          <!-- horizontal shifted up -->
+          <line x1="30" y1="70" x2="175" y2="70" stroke="#1a3a5c" stroke-width="2" stroke-dasharray="5,3"/>
+          <text x="177" y="73" font-size="8" fill="#1a3a5c">ES'</text>
+          <text x="100" y="50" text-anchor="middle" font-size="8" fill="#888">parallel horizontal shift</text>
+        </svg>
+        <div style="font-size:11px;color:#555;margin-top:4px">Horizontal → horizontal parallel shift</div>
+      </div>
+
+      <!-- Graph B: horizontal → upward sloping (wrong — small country supply, wrong shape after) -->
+      <div class="mc-option" id="mc-LB" onclick="selectBridgeLarge('B')">
+        <div class="option-label">Graph B</div>
+        <svg viewBox="0 0 200 150" width="100%">
+          <line x1="20" y1="135" x2="190" y2="135" stroke="#888" stroke-width="1"/>
+          <line x1="20" y1="15" x2="20" y2="135" stroke="#888" stroke-width="1"/>
+          <text x="188" y="140" font-size="8" fill="#888">Q</text>
+          <text x="14" y="12" font-size="8" fill="#888">P</text>
+          <!-- horizontal original -->
+          <line x1="30" y1="105" x2="175" y2="105" stroke="#1a3a5c" stroke-width="2"/>
+          <text x="177" y="108" font-size="8" fill="#1a3a5c">ES</text>
+          <!-- upward sloping new curve -->
+          <line x1="30" y1="80" x2="175" y2="50" stroke="#1a3a5c" stroke-width="2" stroke-dasharray="5,3"/>
+          <text x="177" y="48" font-size="8" fill="#1a3a5c">ES'</text>
+          <text x="100" y="30" text-anchor="middle" font-size="8" fill="#888">horizontal → upward sloping</text>
+        </svg>
+        <div style="font-size:11px;color:#555;margin-top:4px">Horizontal becomes upward sloping</div>
+      </div>
+
+      <!-- Graph C: upward sloping → parallel shift up (large country, specific tariff — wrong type) -->
+      <div class="mc-option" id="mc-LC" onclick="selectBridgeLarge('C')">
+        <div class="option-label">Graph C</div>
+        <svg viewBox="0 0 200 150" width="100%">
+          <line x1="20" y1="135" x2="190" y2="135" stroke="#888" stroke-width="1"/>
+          <line x1="20" y1="15" x2="20" y2="135" stroke="#888" stroke-width="1"/>
+          <text x="188" y="140" font-size="8" fill="#888">Q</text>
+          <text x="14" y="12" font-size="8" fill="#888">P</text>
+          <!-- upward sloping original -->
+          <line x1="30" y1="120" x2="175" y2="75" stroke="#1a3a5c" stroke-width="2"/>
+          <text x="177" y="73" font-size="8" fill="#1a3a5c">ES</text>
+          <!-- upward sloping parallel shift (same slope, shifted up equally) -->
+          <line x1="30" y1="88" x2="175" y2="43" stroke="#1a3a5c" stroke-width="2" stroke-dasharray="5,3"/>
+          <text x="177" y="41" font-size="8" fill="#1a3a5c">ES'</text>
+          <!-- arrows showing equal vertical shift -->
+          <line x1="60" y1="110" x2="60" y2="78" stroke="#c9952a" stroke-width="1" marker-end="url(#arr)"/>
+          <line x1="140" y1="89" x2="140" y2="57" stroke="#c9952a" stroke-width="1"/>
+          <text x="100" y="28" text-anchor="middle" font-size="8" fill="#888">parallel shift (equal Δ at all Q)</text>
+        </svg>
+        <div style="font-size:11px;color:#555;margin-top:4px">Upward sloping → parallel shift up</div>
+      </div>
+
+      <!-- Graph D: CORRECT — upward sloping → steeper rotation -->
+      <div class="mc-option" id="mc-LD" onclick="selectBridgeLarge('D')">
+        <div class="option-label">Graph D</div>
+        <svg viewBox="0 0 200 150" width="100%">
+          <line x1="20" y1="135" x2="190" y2="135" stroke="#888" stroke-width="1"/>
+          <line x1="20" y1="15" x2="20" y2="135" stroke="#888" stroke-width="1"/>
+          <text x="188" y="140" font-size="8" fill="#888">Q</text>
+          <text x="14" y="12" font-size="8" fill="#888">P</text>
+          <!-- upward sloping original -->
+          <line x1="30" y1="120" x2="175" y2="75" stroke="#1a3a5c" stroke-width="2"/>
+          <text x="177" y="73" font-size="8" fill="#1a3a5c">ES</text>
+          <!-- steeper new curve (rotated — larger shift at high Q/P) -->
+          <line x1="30" y1="108" x2="175" y2="42" stroke="#1a3a5c" stroke-width="2" stroke-dasharray="5,3"/>
+          <text x="177" y="40" font-size="8" fill="#1a3a5c">ES'</text>
+          <!-- arrows showing larger shift at higher prices -->
+          <line x1="60" y1="113" x2="60" y2="99" stroke="#c9952a" stroke-width="1.5"/>
+          <line x1="140" y1="84" x2="140" y2="57" stroke="#c9952a" stroke-width="1.5"/>
+          <text x="100" y="27" text-anchor="middle" font-size="8" fill="#2d5a27" font-weight="bold">bigger shift at higher P</text>
+        </svg>
+        <div style="font-size:11px;color:#555;margin-top:4px">Upward sloping → steeper (rotation up)</div>
+      </div>
+
+    </div>
+
+    <div class="feedback hidden" id="fb-bridge-large" style="margin-top:16px"></div>
+
+    <button class="continue-btn hidden" id="btn-bridge-large" onclick="goToAct2()">
+      Continue to Tariff Analysis →
+    </button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ACT 3: TARIFF -->
+  <!-- ============================================================ -->
+  <div class="card hidden" id="act2">
+    <div class="card-header">
+      <div class="act-badge">ACT 3</div>
+      <div class="card-title">Ad Valorem Tariff Analysis
+        <small>t = 25% · New domestic price = P<sup>W</sup> × 1.25 = $25</small>
+      </div>
+    </div>
+
+    <div class="setup-box">
+      <h3>Policy in Effect</h3>
+      <p style="margin-bottom:8px; background:#fff3cd; border-left:3px solid var(--gold); padding:8px 12px; border-radius:0 3px 3px 0; font-style:italic;">
+        We are working under the <strong>small country assumption</strong>. Home cannot affect the world price, so the export supply curve is horizontal at P<sup>W</sup> = $20.
+      </p>
+      <p style="margin-top:8px">The government imposes a <strong>25% ad valorem tariff</strong>. The new domestic price is:</p>
+      <div style="margin:10px 0">
+        <span class="eq-block">P<sub>t</sub> = P<sup>W</sup> × (1 + t) = $20 × 1.25 = <strong>$25</strong></span>
+      </div>
+      <div style="margin-top:10px; border-top:1px solid var(--brown-pale); padding-top:10px">
+        <span class="eq-block">Q<sup>S</sup> = −20 + 4P &nbsp;|&nbsp; P = 5 + Q/4</span>
+        <span class="eq-block">Q<sup>D</sup> = 300 − 4P &nbsp;|&nbsp; P = 75 − Q/4</span>
+      </div>
+    </div>
+
+    <div class="graph-container">
+      <svg id="svg-tariff" viewBox="0 0 560 360" width="100%" style="max-height:360px"></svg>
+      <div class="legend" id="legend-tariff"></div>
+    </div>
+
+    <div class="questions-section">
+      <p style="font-size:13px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--brown-light); margin-bottom:14px">
+        Calculate the new equilibrium and welfare effects:
+      </p>
+
+      <div class="question-block" id="qb-2a">
+        <div class="q-label">Step 1 of 5</div>
+        <div class="q-text">At the new domestic price P<sub>t</sub> = $25, find the new Q<sup>S</sup> and Q<sup>D</sup>.</div>
+        <div class="input-row">
+          <span style="font-size:14px">Q<sup>S</sup> =</span>
+          <input class="answer-input" id="in-2a-qs" type="number" placeholder="?">
+          <span style="font-size:14px">, &nbsp; Q<sup>D</sup> =</span>
+          <input class="answer-input" id="in-2a-qd" type="number" placeholder="?">
+          <button class="check-btn" onclick="check2a()">Check</button>
+        </div>
+        <div class="feedback hidden" id="fb-2a"></div>
+      </div>
+
+      <div class="question-block locked" id="qb-2b">
+        <div class="q-label">Step 2 of 5</div>
+        <div class="q-text">How many bags does Home import now? How has this changed from free trade?</div>
+        <div class="input-row">
+          <span style="font-size:14px">Imports =</span>
+          <input class="answer-input" id="in-2b" type="number" placeholder="?">
+          <button class="check-btn" onclick="check2b()">Check</button>
+        </div>
+        <div class="feedback hidden" id="fb-2b"></div>
+      </div>
+
+      <div class="question-block locked" id="qb-2c">
+        <div class="q-label">Step 3 of 5</div>
+        <div class="q-text">Calculate the new CS and PS at P<sub>t</sub> = $25.</div>
+        <div class="input-row">
+          <span style="font-size:14px">CS = $</span>
+          <input class="answer-input" id="in-2c-cs" type="number" placeholder="?">
+          <span style="font-size:14px">, &nbsp; PS = $</span>
+          <input class="answer-input" id="in-2c-ps" type="number" placeholder="?">
+          <button class="check-btn" onclick="check2c()">Check</button>
+        </div>
+        <div class="feedback hidden" id="fb-2c"></div>
+      </div>
+
+      <div class="question-block locked" id="qb-2d">
+        <div class="q-label">Step 4 of 5</div>
+        <div class="q-text">What is the government's tariff revenue?
+          <br><span style="font-size:13px; color:#6b5030; font-style:italic">TR = tariff per unit × volume of imports</span>
+        </div>
+        <div class="input-row">
+          <span style="font-size:14px">Tariff Revenue = $</span>
+          <input class="answer-input" id="in-2d" type="number" placeholder="?">
+          <button class="check-btn" onclick="check2d()">Check</button>
+        </div>
+        <div class="feedback hidden" id="fb-2d"></div>
+      </div>
+
+      <div class="question-block locked" id="qb-2e">
+        <div class="q-label">Step 5 of 5</div>
+        <div class="q-text">What is the total deadweight loss (DWL) from the tariff?
+          <br><span style="font-size:13px; color:#6b5030; font-style:italic">There are two triangles of lost welfare — one from over-production, one from under-consumption. Each = ½ × (P<sub>t</sub> − P<sup>W</sup>) × change in quantity.</span>
+        </div>
+        <div class="input-row">
+          <span style="font-size:14px">DWL = $</span>
+          <input class="answer-input" id="in-2e" type="number" placeholder="?">
+          <button class="check-btn" onclick="check2e()">Check</button>
+        </div>
+        <div class="feedback hidden" id="fb-2e"></div>
+      </div>
+    </div>
+
+    <!-- Welfare comparison table (shown after all correct) -->
+    <div class="hidden" id="tariff-summary">
+      <h3 style="font-family:'Playfair Display',serif; font-size:18px; margin: 24px 0 12px; color:var(--brown)">Welfare Comparison: Free Trade vs. Tariff</h3>
+      <table class="welfare-table">
+        <thead>
+          <tr>
+            <th>Welfare Component</th>
+            <th>Free Trade</th>
+            <th>Tariff (t=25%)</th>
+            <th>Change</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Consumer Surplus (CS)</td><td>$6,050</td><td>$5,000</td><td class="neg">−$1,050</td></tr>
+          <tr><td>Producer Surplus (PS)</td><td>$450</td><td>$800</td><td class="pos">+$350</td></tr>
+          <tr><td>Tariff Revenue</td><td>$0</td><td>$600</td><td class="pos">+$600</td></tr>
+          <tr class="total-row"><td><strong>Total Home Welfare</strong></td><td><strong>$6,500</strong></td><td><strong>$6,400</strong></td><td class="neg"><strong>−$100</strong></td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:14px; background:var(--cream); padding:14px 18px; border-radius:4px; font-size:13px; line-height:1.7; border-left:4px solid var(--dwl-color)">
+        <strong style="color:var(--dwl-color)">Key Insight:</strong> The tariff creates a net welfare loss of <strong>$100</strong> (= DWL = $50 + $50). Consumers lose $1,050, but this is only partially offset by producer gains ($350) and government revenue ($600). The small country <em>cannot</em> improve welfare with a tariff.
+      </div>
+    </div>
+
+    <button class="continue-btn hidden" id="btn-act2" onclick="goToAct3()">
+      Continue to Quota Analysis →
+    </button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ACT 4: QUOTA -->
+  <!-- ============================================================ -->
+  <div class="card hidden" id="act3">
+    <div class="card-header">
+      <div class="act-badge quota">ACT 4</div>
+      <div class="card-title">The Equivalent Import Quota
+        <small>Same import quantity as the tariff — but who gets the rent?</small>
+      </div>
+    </div>
+
+    <div class="setup-box">
+      <h3>Setup</h3>
+      <p>Instead of a tariff, the government can restrict imports using a <strong>quota</strong> — a direct limit on import quantity. If we set the quota to match the tariff outcome, the domestic price stays at $25 and CS/PS are identical. <em>The key question becomes: who captures the price gap?</em></p>
+      <div style="margin-top:10px">
+        <span class="eq-block">Quota Rent = (P<sub>domestic</sub> − P<sup>W</sup>) × M = ($25 − $20) × M</span>
+      </div>
+    </div>
+
+    <!-- Q4-0: What quota matches the tariff? -->
+    <div class="question-block" id="qb-4a">
+      <div class="q-label">Step 1 — Find the Equivalent Quota</div>
+      <div class="q-text">To replicate the tariff outcome from Act 3, what import quota M (in million bags) should the government set?
+        <br><span style="font-size:13px; color:#6b5030; font-style:italic">Hint: Under the tariff, how many bags were imported?</span>
+      </div>
+      <div class="input-row">
+        <span style="font-size:14px">M = </span>
+        <input class="answer-input" id="in-4a" type="number" placeholder="?">
+        <span style="font-size:14px"> million bags</span>
+        <button class="check-btn" onclick="check4a()">Check</button>
+      </div>
+      <div class="feedback hidden" id="fb-4a"></div>
+    </div>
+
+    <!-- CASE A — unlocks after Q4-0 -->
+    <div id="quota-section-A" class="hidden">
+
+      <div class="quota-tabs" style="margin-top:28px">
+        <div class="quota-tab active" id="qtab-A" onclick="showQuotaCase('A')">Case A<br><small>Govt Auctions Licenses</small></div>
+        <div class="quota-tab" id="qtab-B" onclick="showQuotaCase('B')">Case B<br><small>VER — Foreign Exporters</small></div>
+        <div class="quota-tab" id="qtab-C" onclick="showQuotaCase('C')">Case C<br><small>Domestic Importers</small></div>
+      </div>
+
+      <!-- Case A content -->
+      <div id="quota-A">
+        <h3 style="font-family:'Playfair Display',serif; font-size:16px; color:var(--quota-color); margin:16px 0 10px">
+          Case A: Government Auctions Import Licenses
+        </h3>
+        <p style="font-size:14px; line-height:1.7; margin-bottom:16px">
+          The government sells import licenses to domestic importers at a competitive price. The license price equals the price gap: $25 − $20 = $5 per bag. Government collects all the rent.
+        </p>
+        <div class="graph-container">
+          <svg id="svg-quota-A" viewBox="0 0 560 360" width="100%" style="max-height:360px"></svg>
+          <div class="legend" id="legend-quota-A"></div>
+        </div>
+
+        <!-- Case A question: T/F auction revenue = rent -->
+        <div class="question-block" id="qb-4b" style="margin-top:20px">
+          <div class="q-label">Case A — True or False</div>
+          <div class="q-text">In a well-organized, competitive license auction, the revenue collected by the government should exactly equal the value of the quota rents ($600).</div>
+          <div class="input-row" style="gap:12px">
+            <button class="check-btn" id="btn-4b-true" onclick="check4b('true')" style="background:var(--green);padding:10px 28px;font-size:14px">True</button>
+            <button class="check-btn" id="btn-4b-false" onclick="check4b('false')" style="background:var(--blue);padding:10px 28px;font-size:14px">False</button>
+          </div>
+          <div class="feedback hidden" id="fb-4b"></div>
+        </div>
+
+        <!-- Case A welfare table — hidden until T/F answered -->
+        <div class="hidden" id="table-A">
+          <table class="welfare-table" style="margin-top:16px">
+            <thead><tr><th>Component</th><th>Tariff</th><th>Quota (Case A)</th><th>Difference</th></tr></thead>
+            <tbody>
+              <tr><td>CS</td><td>$5,000</td><td>$5,000</td><td>$0</td></tr>
+              <tr><td>PS</td><td>$800</td><td>$800</td><td>$0</td></tr>
+              <tr><td>Govt Revenue / Rent</td><td>$600</td><td>$600</td><td>$0</td></tr>
+              <tr class="total-row"><td><strong>Total Home Welfare</strong></td><td><strong>$6,400</strong></td><td><strong>$6,400</strong></td><td><strong>$0</strong></td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:12px; background:var(--cream); padding:12px 16px; border-radius:4px; font-size:13px; line-height:1.7; border-left:4px solid var(--quota-color)">
+            <strong>Equivalence Result:</strong> When the government auctions licenses and captures all rent, the quota is <em>perfectly equivalent</em> to the tariff — same prices, same quantities, same welfare distribution.
+          </div>
+          <button class="continue-btn" id="btn-to-caseB" onclick="showQuotaCase('B')" style="margin-top:16px">
+            Continue to Case B →
+          </button>
+        </div>
+      </div>
+
+      <!-- Case B content -->
+      <div id="quota-B" class="hidden">
+        <h3 style="font-family:'Playfair Display',serif; font-size:16px; color:var(--quota-color); margin:16px 0 10px">
+          Case B: VER — Foreign Exporters Capture the Rent
+        </h3>
+        <p style="font-size:14px; line-height:1.7; margin-bottom:16px">
+          If foreign exporters receive the licenses (e.g., via Voluntary Export Restraints), they sell at $25 in the Home market but only cost $20 to produce. They pocket the $5 difference. The $600 rent <strong>leaves the Home country</strong>.
+        </p>
+        <div class="graph-container">
+          <svg id="svg-quota-B" viewBox="0 0 560 360" width="100%" style="max-height:360px"></svg>
+          <div class="legend" id="legend-quota-B"></div>
+        </div>
+
+        <!-- Case B question: MC about switching from VER to auctioned quota -->
+        <div class="question-block" id="qb-4c" style="margin-top:20px">
+          <div class="q-label">Case B — Multiple Choice</div>
+          <div class="q-text">Suppose the government decides to replace the VER with an auctioned import quota (Case A) of the same quantity. What happens to Home welfare?</div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px" id="mc-4c-opts">
+            <button class="check-btn" onclick="check4c('A')" style="text-align:left; padding:10px 16px; background:var(--paper); color:var(--ink); border:1.5px solid var(--brown-pale); border-radius:4px; font-size:13px; cursor:pointer">A) Home welfare falls further — the auction creates additional distortions</button>
+            <button class="check-btn" onclick="check4c('B')" style="text-align:left; padding:10px 16px; background:var(--paper); color:var(--ink); border:1.5px solid var(--brown-pale); border-radius:4px; font-size:13px; cursor:pointer">B) Home welfare is unchanged — it does not matter who holds the licenses</button>
+            <button class="check-btn" onclick="check4c('C')" style="text-align:left; padding:10px 16px; background:var(--paper); color:var(--ink); border:1.5px solid var(--brown-pale); border-radius:4px; font-size:13px; cursor:pointer">C) Home welfare rises by $600 — the rent stays home instead of going abroad</button>
+            <button class="check-btn" onclick="check4c('D')" style="text-align:left; padding:10px 16px; background:var(--paper); color:var(--ink); border:1.5px solid var(--brown-pale); border-radius:4px; font-size:13px; cursor:pointer">D) Home welfare rises by $1,200 — both the rent and DWL are recovered</button>
+          </div>
+          <div class="feedback hidden" id="fb-4c"></div>
+        </div>
+
+        <!-- Case B welfare table — hidden until answered -->
+        <div class="hidden" id="table-B">
+          <table class="welfare-table" style="margin-top:16px">
+            <thead><tr><th>Component</th><th>Tariff</th><th>Quota (Case B)</th><th>Difference</th></tr></thead>
+            <tbody>
+              <tr><td>CS</td><td>$5,000</td><td>$5,000</td><td>$0</td></tr>
+              <tr><td>PS</td><td>$800</td><td>$800</td><td>$0</td></tr>
+              <tr><td>Govt Revenue / Home Rent</td><td>$600</td><td>$0</td><td class="neg">−$600</td></tr>
+              <tr><td>Foreign Rent (lost abroad)</td><td>$0</td><td>$600</td><td class="neg">↑ outflow</td></tr>
+              <tr class="total-row"><td><strong>Total Home Welfare</strong></td><td><strong>$6,400</strong></td><td><strong>$5,800</strong></td><td class="neg"><strong>−$600</strong></td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:12px; background:#fde8e8; padding:12px 16px; border-radius:4px; font-size:13px; line-height:1.7; border-left:4px solid var(--red)">
+            <strong style="color:var(--red)">Worse than the tariff!</strong> Home welfare is $600 lower than under the tariff. The rent that the government would have collected as tariff revenue instead flows to foreign producers. This is exactly what happens with Voluntary Export Restraints (VERs).
+          </div>
+          <button class="continue-btn" id="btn-to-caseC" onclick="showQuotaCase('C')" style="margin-top:16px">
+            Continue to Case C →
+          </button>
+        </div>
+      </div>
+
+      <!-- Case C content -->
+      <div id="quota-C" class="hidden">
+        <h3 style="font-family:'Playfair Display',serif; font-size:16px; color:var(--quota-color); margin:16px 0 10px">
+          Case C: Domestic Importers Receive Licenses for Free
+        </h3>
+        <p style="font-size:14px; line-height:1.7; margin-bottom:16px">
+          The government gives import licenses to domestic importers at no cost (e.g., first-come-first-served, or based on historical import shares). Domestic importers buy abroad at $20 and sell domestically at $25, earning the $5 rent themselves.
+        </p>
+        <div class="graph-container">
+          <svg id="svg-quota-C" viewBox="0 0 560 360" width="100%" style="max-height:360px"></svg>
+          <div class="legend" id="legend-quota-C"></div>
+        </div>
+
+        <!-- Case C question: who gets the rent? MC -->
+        <div class="question-block" id="qb-4d" style="margin-top:20px">
+          <div class="q-label">Case C — Multiple Choice</div>
+          <div class="q-text">When licenses are given away for free, who captures the $600 quota rent?</div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px" id="mc-4d-opts">
+            <button class="check-btn" onclick="check4d('A')" style="text-align:left; padding:10px 16px; background:var(--paper); color:var(--ink); border:1.5px solid var(--brown-pale); border-radius:4px; font-size:13px; cursor:pointer">A) The government</button>
+            <button class="check-btn" onclick="check4d('B')" style="text-align:left; padding:10px 16px; background:var(--paper); color:var(--ink); border:1.5px solid var(--brown-pale); border-radius:4px; font-size:13px; cursor:pointer">B) Foreign exporters</button>
+            <button class="check-btn" onclick="check4d('C')" style="text-align:left; padding:10px 16px; background:var(--paper); color:var(--ink); border:1.5px solid var(--brown-pale); border-radius:4px; font-size:13px; cursor:pointer">C) Domestic importers who receive the licenses</button>
+            <button class="check-btn" onclick="check4d('D')" style="text-align:left; padding:10px 16px; background:var(--paper); color:var(--ink); border:1.5px solid var(--brown-pale); border-radius:4px; font-size:13px; cursor:pointer">D) Domestic non-importing coffee producers</button>
+          </div>
+          <div class="feedback hidden" id="fb-4d"></div>
+        </div>
+
+        <!-- Rent-seeking question — unlocks after MC -->
+        <div class="question-block locked" id="qb-4e">
+          <div class="q-label">Case C — Rent-Seeking Behavior</div>
+          <div class="q-text">Because the license is worth $600 in profit, domestic importers have a strong incentive to lobby, spend time, and expend resources to obtain it. In the extreme case where competition for licenses is perfectly competitive, how much would the rent-seeking party be willing to spend in total to capture this rent?
+            <br><span style="font-size:13px; color:#6b5030; font-style:italic">Think: if you could earn $600 for free, how much would you spend trying to get it?</span>
+          </div>
+          <div class="input-row">
+            <span style="font-size:14px">Max lobbying expenditure = $</span>
+            <input class="answer-input" id="in-4e" type="number" placeholder="?">
+            <button class="check-btn" onclick="check4e()">Check</button>
+          </div>
+          <div class="feedback hidden" id="fb-4e"></div>
+        </div>
+
+        <!-- Case C welfare table + rent-seeking row — hidden until both answered -->
+        <div class="hidden" id="table-C">
+          <table class="welfare-table" style="margin-top:16px">
+            <thead><tr><th>Component</th><th>Tariff</th><th>Quota (Case C)</th><th>Difference</th></tr></thead>
+            <tbody>
+              <tr><td>CS</td><td>$5,000</td><td>$5,000</td><td>$0</td></tr>
+              <tr><td>PS (coffee farmers)</td><td>$800</td><td>$800</td><td>$0</td></tr>
+              <tr><td>Govt Revenue</td><td>$600</td><td>$0</td><td class="neg">−$600</td></tr>
+              <tr><td>Importer Quota Rent</td><td>$0</td><td>$600</td><td class="pos">+$600</td></tr>
+              <tr class="total-row"><td><strong>Total Home Welfare (no rent-seeking)</strong></td><td><strong>$6,400</strong></td><td><strong>$6,400</strong></td><td><strong>$0</strong></td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:12px; background:var(--cream); padding:12px 16px; border-radius:4px; font-size:13px; line-height:1.7; border-left:4px solid var(--quota-color)">
+            <strong>Same aggregate welfare, different distribution</strong> — <em>unless</em> rent-seeking occurs. If importers spend resources competing for the license (lobbying, legal fees, time), those expenditures are pure social waste. In the competitive extreme, the full $600 is burned up in the contest, and Home welfare falls to <strong>$5,800</strong> — the same as Case B.
+          </div>
+        </div>
+
+        <button class="continue-btn hidden" id="btn-to-summary" onclick="showFinalSummary()" style="margin-top:20px">
+          See the Full Picture →
+        </button>
+      </div>
+
+    </div><!-- /quota-section-A -->
+
+    <!-- Final Summary — hidden until all cases done -->
+    <div class="hidden" id="quota-final-summary" style="margin-top:32px; border-top:2px solid var(--brown-pale); padding-top:24px">
+      <h3 style="font-family:'Playfair Display',serif; font-size:20px; color:var(--brown); margin-bottom:16px">
+        The Full Picture: Tariff vs. Quota Comparison
+      </h3>
+      <table class="welfare-table">
+        <thead>
+          <tr>
+            <th>Regime</th>
+            <th>CS</th>
+            <th>PS</th>
+            <th>Govt/Home Rent</th>
+            <th>Foreign Rent</th>
+            <th><strong>Home TW</strong></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Free Trade</td><td>$6,050</td><td>$450</td><td>$0</td><td>—</td><td><strong>$6,500</strong></td></tr>
+          <tr><td>Tariff (t=25%)</td><td>$5,000</td><td>$800</td><td>$600</td><td>$0</td><td><strong>$6,400</strong></td></tr>
+          <tr><td>Quota – Case A</td><td>$5,000</td><td>$800</td><td>$600</td><td>$0</td><td><strong>$6,400</strong></td></tr>
+          <tr><td>Quota – Case B (VER)</td><td>$5,000</td><td>$800</td><td>$0</td><td>$600</td><td class="neg"><strong>$5,800</strong></td></tr>
+          <tr><td>Quota – Case C</td><td>$5,000</td><td>$800</td><td>$0 (→importers)</td><td>$0</td><td><strong>$6,400</strong></td></tr>
+          <tr style="background:#fff0f0"><td>Quota – Case C + Rent-Seeking</td><td>$5,000</td><td>$800</td><td>$0</td><td>$0</td><td class="neg"><strong>$5,800</strong></td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px; font-size:12px; font-style:italic; color:#888; padding:0 4px">* Case C + Rent-Seeking: the $600 importer rent is entirely consumed by lobbying and competition for licenses, yielding the same Home TW as Case B.</div>
+
+      <div class="summary-banner" style="margin-top:20px">
+        <h3>🎓 Key Takeaways</h3>
+        <p style="text-align:left; margin-top:10px; line-height:1.8">
+          <strong>1. Small country result:</strong> A tariff always reduces total home welfare — the DWL is unavoidable.<br>
+          <strong>2. Tariff ≡ Quota (Case A):</strong> Equivalent when government captures all quota rent via competitive auction.<br>
+          <strong>3. Case B (VERs):</strong> Worse than a tariff — the $600 rent flows abroad to foreign exporters.<br>
+          <strong>4. Rent-seeking:</strong> Even if rent stays home (Case C), competitive lobbying can dissipate it entirely — yielding the same outcome as Case B.<br>
+          <strong>5. The real loss:</strong> The DWL triangles are unavoidable under any import restriction — rent allocation only determines who bears the additional burden.
+        </p>
+      </div>
+
+      <!-- Completion box -->
+      <div style="margin-top:28px; background:var(--paper); border:2px solid var(--brown-pale); border-radius:6px; padding:24px; text-align:center; box-shadow:0 2px 12px var(--shadow)">
+        <div style="font-family:'Playfair Display',serif; font-size:18px; font-weight:700; color:var(--brown); margin-bottom:6px">🎉 You've completed the Trade Policy Game!</div>
+        <p style="font-size:13px; color:#6b5030; margin-bottom:18px">Enter your name and click the button to notify Professor Heo.</p>
+        <div style="display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap">
+          <input type="text" id="student-name" placeholder="Your full name" style="border:1.5px solid var(--brown-pale); border-radius:4px; padding:9px 16px; font-family:'Source Serif 4',serif; font-size:14px; width:220px; color:var(--ink)">
+          <button onclick="sendCompletion()" style="background:var(--brown); color:#fff8ee; border:none; padding:10px 24px; border-radius:4px; font-family:'Playfair Display',serif; font-size:14px; font-weight:700; cursor:pointer; transition:background 0.2s">
+            ✉ Email Professor
+          </button>
+        </div>
+        <div id="email-feedback" style="margin-top:10px; font-size:13px; color:#6b5030; font-style:italic; min-height:20px"></div>
+      </div>
+    </div>
+
+  </div><!-- /act3 card -->
+
+</div><!-- /wrapper -->
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const DATA = {
+  Pw: 20, Pt: 25, t: 0.25,
+  Ps_int: 5, Pd_int: 75,
+  Autarky_P: 40, Autarky_Q: 140,
+  Qs_ft: 60, Qd_ft: 220, M_ft: 160,
+  CS_ft: 6050, PS_ft: 450, TW_ft: 6500,
+  Qs_t: 80, Qd_t: 200, M_t: 120,
+  CS_t: 5000, PS_t: 800, TR: 600, TW_t: 6400,
+  DWL_b: 50, DWL_d: 50, DWL: 100,
+};
+
+// Track reveal level for each act's graph
+// Act1: 0=base, 1=autarky, 2=world price+verticals, 3=import bracket, 4=CS/PS shading, 5=labels
+// Act2: 0=base(=ft complete), 1=Pt line+verticals, 2=import bracket, 3=CS/PS reshaded, 4=+rect c, 5=+DWL triangles
+let ftLevel = 0;
+let tariffLevel = 0;
+
+// ============================================================
+// GRAPH DRAWING — shared canvas helpers
+// ============================================================
+function makeGraphBase(svgId) {
+  // Returns helpers {el, line, text, polygon, xS, yS, svg} and draws axes/grid/curves
+  const svg = document.getElementById(svgId);
+  if (!svg) return null;
+  svg.innerHTML = '';
+  const W=560, H=360;
+  const pad = {top:30, right:40, bottom:50, left:60};
+  const gW = W-pad.left-pad.right, gH = H-pad.top-pad.bottom;
+  const Pmax=80, Qmax=280;
+  const xS = q => pad.left + (q/Qmax)*gW;
+  const yS = p => pad.top + gH - (p/Pmax)*gH;
+
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [k,v] of Object.entries(attrs)) e.setAttribute(k,v);
+    (parent||svg).appendChild(e); return e;
+  }
+  function line(x1,y1,x2,y2,stroke,sw,dash) {
+    return el('line',{x1,y1,x2,y2,stroke:stroke||'#333','stroke-width':sw||1.5,...(dash?{'stroke-dasharray':dash}:{})});
+  }
+  function txt(x,y,content,opts={}) {
+    const t=el('text',{x,y,'font-size':opts.size||12,fill:opts.fill||'#1a1208',
+      'text-anchor':opts.anchor||'middle','font-family':"'Source Serif 4', Georgia, serif",
+      'font-weight':opts.bold?'700':'400'});
+    t.textContent=content; svg.appendChild(t); return t;
+  }
+  function polygon(pts,fill,opacity,cls) {
+    const p=el('polygon',{points:pts.map(p=>`${xS(p[0])},${yS(p[1])}`).join(' '),fill,opacity:opacity||0.55});
+    if(cls) p.classList.add(cls);
+    return p;
+  }
+  function animEl(e) {
+    e.style.opacity='0'; e.style.transition='opacity 0.5s ease';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ e.style.opacity='1'; }));
+    return e;
+  }
+
+  // Axes
+  line(pad.left,pad.top,pad.left,pad.top+gH,'#555',1.5);
+  line(pad.left,pad.top+gH,pad.left+gW,pad.top+gH,'#555',1.5);
+  // Grid
+  [20,40,60,80].forEach(p=>{
+    line(pad.left,yS(p),pad.left+gW,yS(p),'#e8d5b7',0.8,'4,3');
+    txt(pad.left-8,yS(p)+4,p,{size:11,anchor:'end',fill:'#7a6040'});
+  });
+  [0,50,100,150,200,250].forEach(q=>{
+    line(xS(q),pad.top,xS(q),pad.top+gH,'#e8d5b7',0.8,'4,3');
+    txt(xS(q),pad.top+gH+16,q,{size:11,fill:'#7a6040'});
+  });
+  // Axis labels
+  txt(pad.left+gW/2, H-4,'Quantity (million bags)',{size:12,fill:'#6b3a1f'});
+  const pl=txt(14,pad.top+gH/2,'Price ($/bag)',{size:12,fill:'#6b3a1f'});
+  pl.setAttribute('transform',`rotate(-90,14,${pad.top+gH/2})`);
+
+  // Supply curve: P = 5 + Q/4  at Q=0→P=5, Q=280→P=75
+  line(xS(0),yS(5),xS(280),yS(75),'#c9952a',2.5);
+  txt(xS(240)+10,yS(65)-22,'S',{size:14,fill:'#c9952a',bold:true});
+  // Demand curve: P = 75 - Q/4  at Q=0→P=75, Q=280→P=5
+  line(xS(0),yS(75),xS(280),yS(5),'#1a3a5c',2.5);
+  txt(xS(10)+4,yS(75-10/4)-10,'D',{size:14,fill:'#1a3a5c',bold:true});
+
+  return {el,line,txt,polygon,animEl,xS,yS,svg,pad,gW,gH};
+}
+
+// ============================================================
+// FREE TRADE GRAPH — progressive reveal by level 0–5
+// ============================================================
+function drawFT(level) {
+  const c = makeGraphBase('svg-ft');
+  if (!c) return;
+  const {line,txt,polygon,animEl,xS,yS} = c;
+  const {Pw,Pt,Autarky_P:Pa,Autarky_Q:Qa,Qs_ft:Qs,Qd_ft:Qd,M_ft:M} = DATA;
+  const leg = document.getElementById('legend-ft');
+  let legHtml = '';
+
+  // Level 1+: autarky point AND world price line
+  if (level >= 1) {
+    // Autarky dashed crosshairs + dot
+    animEl(line(xS(Qa),yS(Pa),xS(Qa),yS(0),'#888',1,'4,3'));
+    animEl(line(xS(0),yS(Pa),xS(Qa),yS(Pa),'#888',1,'4,3'));
+    const dot = c.el('circle',{cx:xS(Qa),cy:yS(Pa),r:5,fill:'#888',stroke:'#fff','stroke-width':1.5});
+    animEl(dot);
+    animEl(txt(xS(Qa)+8,yS(Pa)-8,`Autarky (P=${Pa}, Q=${Qa})`,{size:10,fill:'#666',anchor:'start'}));
+    txt(xS(0)-8,yS(Pa)+4,Pa,{size:11,anchor:'end',fill:'#888'});
+    txt(xS(Qa),yS(0)+16,Qa,{size:11,fill:'#888'});
+    // World price horizontal line
+    animEl(line(xS(0),yS(Pw),xS(Qd)+30,yS(Pw),'#e05020',2,'7,4'));
+    animEl(txt(xS(Qd)+35,yS(Pw)-5,`PW=$${Pw}`,{size:11,fill:'#e05020',bold:true,anchor:'start'}));
+    txt(xS(0)-8,yS(Pw)+4,Pw,{size:11,anchor:'end',fill:'#e05020'});
+    legHtml += `<div class="legend-item"><div class="legend-swatch" style="background:#e05020;height:3px;margin-top:5px"></div>World Price P<sup>W</sup> = $${Pw}</div>`;
+  }
+
+  // Level 2+: Qs and Qd vertical lines
+  if (level >= 2) {
+    animEl(line(xS(Qs),yS(Pw),xS(Qs),yS(0),'#888',1,'3,3'));
+    animEl(line(xS(Qd),yS(Pw),xS(Qd),yS(0),'#888',1,'3,3'));
+    animEl(txt(xS(Qs),yS(0)+16,`${Qs}`,{size:11,fill:'#6b3a1f'}));
+    animEl(txt(xS(Qd),yS(0)+16,`${Qd}`,{size:11,fill:'#6b3a1f'}));
+    legHtml += `<div class="legend-item"><div class="legend-swatch" style="background:#e05020;height:3px;margin-top:5px"></div>World Price P<sup>W</sup> = $${Pw}</div>`;
+  }
+
+  // Level 3+: import bracket
+  if (level >= 3) {
+    const y = yS(Pw)-16;
+    animEl(line(xS(Qs),y,xS(Qd),y,'#e05020',2));
+    animEl(line(xS(Qs),y-5,xS(Qs),y+5,'#e05020',1.5));
+    animEl(line(xS(Qd),y-5,xS(Qd),y+5,'#e05020',1.5));
+    animEl(txt(xS((Qs+Qd)/2),y-7,`Imports = ${M}`,{size:11,fill:'#e05020',bold:true}));
+  }
+
+  // Level 4+: CS and PS shading
+  if (level >= 4) {
+    animEl(polygon([[0,Pw],[0,75],[Qd,Pw]],'#4a8c3f',0.25));
+    animEl(polygon([[0,5],[0,Pw],[Qs,Pw]],'#c9952a',0.35));
+    legHtml = `<div class="legend-item"><div class="legend-swatch" style="background:#4a8c3f;opacity:0.7"></div>Consumer Surplus</div>
+               <div class="legend-item"><div class="legend-swatch" style="background:#c9952a;opacity:0.8"></div>Producer Surplus</div>` + legHtml;
+  }
+
+  // Level 5+: CS/PS value labels on graph — white, centered in each triangle
+  if (level >= 5) {
+    // CS triangle centroid: vertices (0,Pw=20), (0,75), (Qd=220,Pw=20)
+    // centroid Q = (0+0+220)/3 ≈ 73, centroid P = (20+75+20)/3 ≈ 38
+    animEl(txt(xS(73),yS(40),'CS = $6,050',{size:11,fill:'#fff',bold:true}));
+    // PS triangle centroid: vertices (0,5), (0,Pw=20), (Qs=60,Pw=20)
+    // centroid Q = (0+0+60)/3 = 20, centroid P = (5+20+20)/3 ≈ 15
+    animEl(txt(xS(20),yS(15),'PS = $450',{size:10,fill:'#fff',bold:true}));
+    legHtml = `<div class="legend-item"><div class="legend-swatch" style="background:#4a8c3f;opacity:0.7"></div>Consumer Surplus (CS = $6,050)</div>
+               <div class="legend-item"><div class="legend-swatch" style="background:#c9952a;opacity:0.8"></div>Producer Surplus (PS = $450)</div>` +
+               `<div class="legend-item"><div class="legend-swatch" style="background:#e05020;height:3px;margin-top:5px"></div>World Price P<sup>W</sup> = $${Pw}</div>`;
+  }
+
+  leg.innerHTML = legHtml;
+}
+
+// ============================================================
+// TARIFF GRAPH — progressive reveal by level 0–5
+// ============================================================
+function drawTariff(level) {
+  const c = makeGraphBase('svg-tariff');
+  if (!c) return;
+  const {line,txt,polygon,animEl,xS,yS} = c;
+  const {Pw,Pt,Qs_ft:Qsft,Qd_ft:Qdft,Qs_t:Qs,Qd_t:Qd,M_t:M} = DATA;
+  const leg = document.getElementById('legend-tariff');
+  let legHtml = '';
+
+  // Always show BOTH world price and tariff price lines from the start
+  // World price (dashed reference)
+  line(xS(0),yS(Pw),xS(Qdft)+10,yS(Pw),'#e05020',1.5,'6,4');
+  txt(xS(Qdft)+14,yS(Pw)-5,'Non-tariff price',{size:10,fill:'#e05020',bold:true,anchor:'start'});
+  txt(xS(0)-8,yS(Pw)+4,Pw,{size:11,anchor:'end',fill:'#e05020'});
+  // Tariff price (solid)
+  line(xS(0),yS(Pt),xS(Qdft)+10,yS(Pt),'#8b1a1a',2);
+  txt(xS(Qdft)+14,yS(Pt)-5,'Tariffed price',{size:10,fill:'#8b1a1a',bold:true,anchor:'start'});
+  txt(xS(0)-8,yS(Pt)+4,Pt,{size:11,anchor:'end',fill:'#8b1a1a'});
+  // No brace annotation — axis ticks at 20 and 25 are sufficient
+  legHtml += `<div class="legend-item"><div class="legend-swatch" style="background:#e05020;height:3px;margin-top:5px;opacity:0.7"></div>P<sup>W</sup> = $${Pw} (world price)</div>
+              <div class="legend-item"><div class="legend-swatch" style="background:#8b1a1a;height:3px;margin-top:5px"></div>P<sub>t</sub> = $${Pt} (domestic price with tariff)</div>`;
+
+  // Level 1+: new Q verticals at Qs and Qd, plus dimmed old ones
+  if (level >= 1) {
+    // Old verticals (dimmed)
+    line(xS(Qsft),yS(Pw),xS(Qsft),yS(0),'#bbb',1,'3,3');
+    line(xS(Qdft),yS(Pw),xS(Qdft),yS(0),'#bbb',1,'3,3');
+    txt(xS(Qsft),yS(0)+16,`${Qsft}`,{size:10,fill:'#aaa'});
+    txt(xS(Qdft),yS(0)+16,`${Qdft}`,{size:10,fill:'#aaa'});
+    // New verticals
+    animEl(line(xS(Qs),yS(Pt),xS(Qs),yS(0),'#888',1,'3,3'));
+    animEl(line(xS(Qd),yS(Pt),xS(Qd),yS(0),'#888',1,'3,3'));
+    animEl(txt(xS(Qs),yS(0)+16,`${Qs}`,{size:11,fill:'#6b3a1f'}));
+    animEl(txt(xS(Qd),yS(0)+16,`${Qd}`,{size:11,fill:'#6b3a1f'}));
+  }
+
+  // Level 2+: import bracket
+  if (level >= 2) {
+    const y = yS(Pt)-16;
+    animEl(line(xS(Qs),y,xS(Qd),y,'#8b1a1a',2));
+    animEl(line(xS(Qs),y-5,xS(Qs),y+5,'#8b1a1a',1.5));
+    animEl(line(xS(Qd),y-5,xS(Qd),y+5,'#8b1a1a',1.5));
+    animEl(txt(xS((Qs+Qd)/2),y-7,`Imports = ${M}`,{size:11,fill:'#8b1a1a',bold:true}));
+  }
+
+  // Level 3+: CS and PS areas (post-tariff)
+  if (level >= 3) {
+    animEl(polygon([[0,Pt],[0,75],[Qd,Pt]],'#4a8c3f',0.2));
+    // PS = full triangle below Pt above supply
+    animEl(polygon([[0,5],[0,Pt],[Qs,Pt]],'#c9952a',0.3));
+    legHtml = `<div class="legend-item"><div class="legend-swatch" style="background:#4a8c3f;opacity:0.6"></div>Consumer Surplus (CS = $5,000)</div>
+               <div class="legend-item"><div class="legend-swatch" style="background:#c9952a;opacity:0.7"></div>Producer Surplus (PS = $800)</div>` + legHtml;
+  }
+
+  // Level 4+: Tariff revenue rectangle (area c)
+  if (level >= 4) {
+    animEl(polygon([[Qs,Pw],[Qs,Pt],[Qd,Pt],[Qd,Pw]],'#1a3a5c',0.45));
+    legHtml += `<div class="legend-item"><div class="legend-swatch" style="background:#1a3a5c;opacity:0.7"></div>Tariff Revenue ($600)</div>`;
+  }
+
+  // Level 5+: DWL triangles b and d
+  if (level >= 5) {
+    // Triangle b (production distortion): between Qsft and Qs, between Pw and supply curve
+    animEl(polygon([[Qsft,Pw],[Qs,Pw],[Qs,Pt]],'#8b1a1a',0.6));
+    // Triangle d (consumption distortion): between Qd and Qdft, between Pw and demand curve
+    animEl(polygon([[Qd,Pw],[Qd,Pt],[Qdft,Pw]],'#8b1a1a',0.6));
+    animEl(txt(xS((Qsft+Qs)/2),yS(Pw+2.5),'b',{size:11,fill:'#fff',bold:true}));
+    animEl(txt(xS((Qd+Qdft)/2),yS(Pw+2.5),'d',{size:11,fill:'#fff',bold:true}));
+    // Also label area 'a' on PS gain portion
+    animEl(txt(xS(20),yS((Pw+Pt)/2),'a',{size:12,fill:'#7a4a10',bold:true}));
+    legHtml += `<div class="legend-item"><div class="legend-swatch" style="background:#8b1a1a;opacity:0.8"></div>b, d = DWL triangles ($50 each)</div>`;
+  }
+
+  leg.innerHTML = legHtml;
+}
+
+// Keep legacy makeGraph for quota graphs
+function makeGraph(svgId, legendId, scenario) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  svg.innerHTML = '';
+
+  const W = 560, H = 360;
+  const pad = { top: 30, right: 40, bottom: 50, left: 60 };
+  const gW = W - pad.left - pad.right;
+  const gH = H - pad.top - pad.bottom;
+
+  // Price axis: 0 to 80 | Q axis: 0 to 280
+  const Pmax = 80, Qmax = 280;
+  const xS = q => pad.left + (q / Qmax) * gW;
+  const yS = p => pad.top + gH - (p / Pmax) * gH;
+
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+    (parent || svg).appendChild(e);
+    return e;
+  }
+  function line(x1, y1, x2, y2, stroke, sw, dash, par) {
+    return el('line', { x1, y1, x2, y2, stroke: stroke||'#333', 'stroke-width': sw||1.5, ...(dash?{'stroke-dasharray':dash}:{}) }, par);
+  }
+  function text(x, y, content, opts={}) {
+    const t = el('text', { x, y, 'font-size': opts.size||12, fill: opts.fill||'#1a1208',
+      'text-anchor': opts.anchor||'middle', 'font-family': "'Source Serif 4', Georgia, serif",
+      'font-weight': opts.bold?'700':'400' });
+    t.textContent = content;
+    svg.appendChild(t);
+    return t;
+  }
+  function polygon(pts, fill, opacity) {
+    return el('polygon', { points: pts.map(p=>`${xS(p[0])},${yS(p[1])}`).join(' '),
+      fill, opacity: opacity||0.55 });
+  }
+  function axisLabel(x, y, content, opts={}) { return text(x, y, content, opts); }
+
+  // Axes
+  line(pad.left, pad.top, pad.left, pad.top+gH, '#555', 1.5);
+  line(pad.left, pad.top+gH, pad.left+gW, pad.top+gH, '#555', 1.5);
+
+  // Grid lines
+  [20,40,60,80].forEach(p => {
+    line(pad.left, yS(p), pad.left+gW, yS(p), '#e8d5b7', 0.8, '4,3');
+    text(pad.left-8, yS(p)+4, p, { size:11, anchor:'end', fill:'#7a6040' });
+  });
+  [0,50,100,150,200,250].forEach(q => {
+    line(xS(q), pad.top, xS(q), pad.top+gH, '#e8d5b7', 0.8, '4,3');
+    text(xS(q), pad.top+gH+16, q, { size:11, fill:'#7a6040' });
+  });
+
+  // Axis labels
+  text(pad.left + gW/2, H-4, 'Quantity (million bags)', { size:12, fill:'#6b3a1f' });
+  axisLabel(14, pad.top + gH/2, 'Price ($/bag)', { size:12, fill:'#6b3a1f', anchor:'middle' });
+  // Rotate P axis label
+  const pLabel = svg.lastChild;
+  pLabel.setAttribute('transform', `rotate(-90, 14, ${pad.top + gH/2})`);
+
+  // Supply curve: Qs = -20+4P => P = 5 + Q/4
+  // At Q=0: P=5, At Qmax=280: P=75
+  const supPts = [[0, 5], [Qmax, 5 + Qmax/4]];
+  line(xS(supPts[0][0]), yS(supPts[0][1]), xS(supPts[1][0]), yS(supPts[1][1]), '#c9952a', 2.5);
+
+  // Demand curve: Qd = 300-4P => P = 75 - Q/4
+  // At Q=0: P=75, At Q=280: P=5
+  const demPts = [[0, 75], [Qmax, 5]];
+  line(xS(demPts[0][0]), yS(demPts[0][1]), xS(demPts[1][0]), yS(demPts[1][1]), '#1a3a5c', 2.5);
+
+  // Curve labels
+  text(xS(220)+10, yS(5+220/4)-8, 'S', { size:13, fill:'#c9952a', bold:true });
+  text(xS(10)+4, yS(75-10/4)-8, 'D', { size:13, fill:'#1a3a5c', bold:true });
+
+  const Pw = DATA.Pw, Pt = DATA.Pt;
+
+  if (scenario === 'ft') {
+    const { Qs_ft: Qs, Qd_ft: Qd } = DATA;
+    // CS area (above Pw, below demand)
+    polygon([[0,Pw],[0,75],[Qd,Pw]], '#4a8c3f', 0.25);
+    // PS area (below Pw, above supply)
+    polygon([[0,5],[0,Pw],[Qs,Pw]], '#c9952a', 0.3);
+
+    // World price line
+    line(xS(0), yS(Pw), xS(Qd)+30, yS(Pw), '#e05020', 2, '7,4');
+    text(xS(Qd)+20, yS(Pw)-6, `PW=$${Pw}`, { size:11, fill:'#e05020', bold:true, anchor:'start' });
+
+    // Quantity markers
+    [['Qs', Qs, Pw], ['Qd', Qd, Pw]].forEach(([lbl, q, p]) => {
+      line(xS(q), yS(p), xS(q), yS(0), '#888', 1, '4,3');
+      text(xS(q), yS(0)+16, `${q}=${lbl==='Qs'?Qs:Qd}`, { size:10, fill:'#6b3a1f' });
+    });
+    // Import bracket
+    line(xS(Qs), yS(Pw)-14, xS(Qd), yS(Pw)-14, '#e05020', 1.5);
+    line(xS(Qs), yS(Pw)-10, xS(Qs), yS(Pw)-18, '#e05020', 1.5);
+    line(xS(Qd), yS(Pw)-10, xS(Qd), yS(Pw)-18, '#e05020', 1.5);
+    text(xS((Qs+Qd)/2), yS(Pw)-20, `Imports = ${Qd-Qs}`, { size:10, fill:'#e05020', bold:true });
+
+    // Autarky point
+    el('circle', { cx: xS(140), cy: yS(40), r: 4, fill:'#888' });
+    text(xS(140)+6, yS(40)-6, 'Autarky (40,140)', { size:10, fill:'#888', anchor:'start' });
+
+    // Legend
+    document.getElementById(legendId).innerHTML = `
+      <div class="legend-item"><div class="legend-swatch" style="background:#4a8c3f;opacity:0.7"></div>Consumer Surplus (CS = $6,050)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#c9952a;opacity:0.8"></div>Producer Surplus (PS = $450)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#e05020;opacity:0.8; height:3px; margin-top:5px"></div>World Price P<sup>W</sup> = $20</div>
+    `;
+
+  } else if (scenario === 'tariff') {
+    const { Qs_ft: Qsft, Qd_ft: Qdft, Qs_t: Qs, Qd_t: Qd } = DATA;
+
+    // Welfare areas a, b, c, d
+    // a = PS gain = rectangle [0, Pw->Pt, 0->Qs_ft]
+    polygon([[0,Pw],[0,Pt],[Qsft,Pt],[Qsft,Pw]], '#c9952a', 0.45); // a
+    // b = DWL production = triangle [Qs_ft, Pt, Qs_t, Pw]
+    polygon([[Qsft,Pw],[Qsft,Pt],[Qs,Pt],[Qs,Pw]], '#8b1a1a', 0.5); // approx triangle using supply slope
+    // Actually draw correct triangle using supply line
+    svg.querySelectorAll('polygon').forEach(p => {});
+    // b triangle: vertices (Qsft, Pw), (Qs, Pw), (Qs, Pt) -- but supply goes from (Qsft,Pw) to (Qs,Pt)
+    // correct b: polygon (Qsft,Pw), (Qs,Pw) ... no wait:
+    // b = triangle between old and new production points on supply curve
+    // Points: (Qsft, Pw), (Qs, Pt), (Qsft, Pt)  <- no
+    // Correct: on supply curve the triangle is (Qsft, Pw), (Qs, Pw), intersection with Pt line
+    // b = ½*(Pt-Pw)*(Qs-Qsft) — vertices: (Qsft,Pw),(Qs,Pw),(Qs,Pt) won't be right since supply is sloped
+    // Simplified triangle for illustration: (Qsft,Pw), (Qs,Pw), (Qs,Pt) — close enough for visual
+    polygon([[Qsft,Pw],[Qs,Pw],[Qs,Pt]], '#8b1a1a', 0.55);
+    // c = tariff revenue rectangle
+    polygon([[Qsft,Pw],[Qsft,Pt],[Qd,Pt],[Qd,Pw]], '#1a3a5c', 0.3);
+    // d = DWL consumption triangle
+    polygon([[Qd,Pw],[Qd,Pt],[Qdft,Pw]], '#8b1a1a', 0.55);
+    // CS above Pt
+    polygon([[0,Pt],[0,75],[Qd,Pt]], '#4a8c3f', 0.2);
+
+    // World price line (dashed)
+    line(xS(0), yS(Pw), xS(Qdft)+10, yS(Pw), '#e05020', 1.5, '6,4');
+    text(xS(Qdft)+5, yS(Pw)-5, `PW=$${Pw}`, { size:10, fill:'#e05020', bold:true, anchor:'start' });
+    // Tariff price line
+    line(xS(0), yS(Pt), xS(Qd)+30, yS(Pt), '#8b1a1a', 2.5);
+    text(xS(Qd)+20, yS(Pt)-6, `Pt=$${Pt}`, { size:11, fill:'#8b1a1a', bold:true, anchor:'start' });
+
+    // Quantity markers
+    [[Qsft,'Qs₀'],[Qs,'Qs₁'],[Qd,'Qd₁'],[Qdft,'Qd₀']].forEach(([q,lbl]) => {
+      line(xS(q), yS(Pt)+5, xS(q), yS(0), '#888', 1, '3,3');
+      text(xS(q), yS(0)+16, `${q}`, { size:10, fill:'#6b3a1f' });
+    });
+
+    // Area labels
+    text(xS((Qsft+Qsft)/2 + (Qsft)*0+10), yS((Pw+Pt)/2), 'a', { size:13, fill:'#7a4a10', bold:true });
+    text(xS((Qsft+Qs)/2), yS(Pw+3), 'b', { size:12, fill:'#fff', bold:true });
+    text(xS((Qsft+Qd)/2), yS((Pw+Pt)/2), 'c', { size:13, fill:'#fff', bold:true });
+    text(xS((Qd+Qdft)/2), yS(Pw+3), 'd', { size:12, fill:'#fff', bold:true });
+
+    document.getElementById(legendId).innerHTML = `
+      <div class="legend-item"><div class="legend-swatch" style="background:#4a8c3f;opacity:0.6"></div>CS (post-tariff)</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#c9952a;opacity:0.8"></div>a = PS gain</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#1a3a5c;opacity:0.7"></div>c = Tariff Revenue</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#8b1a1a;opacity:0.8"></div>b, d = DWL triangles</div>
+    `;
+
+  } else if (scenario === 'quota-A' || scenario === 'quota-B' || scenario === 'quota-C') {
+    const { Qs_ft: Qsft, Qd_ft: Qdft, Qs_t: Qs, Qd_t: Qd } = DATA;
+    const rentColor = scenario === 'quota-A' ? '#1a3a5c' : scenario === 'quota-B' ? '#8b3a8b' : '#c9952a';
+    const rentLabel = scenario === 'quota-A' ? 'Govt\nRent' : scenario === 'quota-B' ? 'Foreign\nRent' : 'Importer\nRent';
+
+    // CS above Pt
+    polygon([[0,Pt],[0,75],[Qd,Pt]], '#4a8c3f', 0.2);
+    // PS
+    polygon([[0,5],[0,Pt],[Qs,Pt]], '#c9952a', 0.25);
+    // Quota rent rectangle — correctly spans Qs(80) to Qd(200)
+    polygon([[Qs,Pw],[Qs,Pt],[Qd,Pt],[Qd,Pw]], rentColor, 0.45);
+    // DWL triangles
+    polygon([[Qsft,Pw],[Qs,Pw],[Qs,Pt]], '#8b1a1a', 0.55);
+    polygon([[Qd,Pw],[Qd,Pt],[Qdft,Pw]], '#8b1a1a', 0.55);
+
+    // World price
+    line(xS(0), yS(Pw), xS(Qdft)+10, yS(Pw), '#e05020', 1.5, '6,4');
+    text(xS(Qdft)+5, yS(Pw)-5, `PW=$${Pw}`, { size:10, fill:'#e05020', bold:true, anchor:'start' });
+    // Domestic price
+    line(xS(0), yS(Pt), xS(Qd)+30, yS(Pt), '#8b1a1a', 2.5);
+    text(xS(Qd)+20, yS(Pt)-6, `Pd=$${Pt}`, { size:11, fill:'#8b1a1a', bold:true, anchor:'start' });
+
+    // Quota bracket
+    line(xS(Qs), yS(Pw)-14, xS(Qd), yS(Pw)-14, rentColor, 2);
+    line(xS(Qs), yS(Pw)-10, xS(Qs), yS(Pw)-18, rentColor, 1.5);
+    line(xS(Qd), yS(Pw)-10, xS(Qd), yS(Pw)-18, rentColor, 1.5);
+    text(xS((Qs+Qd)/2), yS(Pw)-22, `Quota = ${Qd-Qs}`, { size:10, fill:rentColor, bold:true });
+
+    [[Qsft,'Qs₀'],[Qs,'Qs₁'],[Qd,'Qd₁'],[Qdft,'Qd₀']].forEach(([q]) => {
+      line(xS(q), yS(Pt)+5, xS(q), yS(0), '#888', 1, '3,3');
+      text(xS(q), yS(0)+16, `${q}`, { size:10, fill:'#6b3a1f' });
+    });
+
+    const rentDesc = scenario==='quota-A' ? 'Quota Rent → Government' :
+                     scenario==='quota-B' ? 'Quota Rent → Foreign Exporters (VER)' :
+                     'Quota Rent → Domestic Importers';
+    document.getElementById(legendId).innerHTML = `
+      <div class="legend-item"><div class="legend-swatch" style="background:#4a8c3f;opacity:0.6"></div>CS</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#c9952a;opacity:0.7"></div>PS</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:${rentColor};opacity:0.7"></div>${rentDesc}</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:#8b1a1a;opacity:0.8"></div>DWL triangles</div>
+    `;
+  }
+}
+
+// ============================================================
+// QUESTION CHECKING
+// ============================================================
+function unlock(id) {
+  const el = document.getElementById(id);
+  if (el) { el.classList.remove('locked'); }
+}
+
+function showFeedback(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = 'feedback ' + (type==='correct'?'correct-msg':type==='hint'?'hint-msg':'wrong-msg');
+  el.innerHTML = msg;
+  el.classList.remove('hidden');
+}
+
+function markCorrect(blockId, inputIds) {
+  document.getElementById(blockId).classList.add('correct');
+  inputIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.add('correct-input'); el.readOnly = true; }
+  });
+}
+
+let act1Progress = [false,false,false,false,false];
+let att1a=0, att1b=0, att1c=0, att1d=0, att1e=0;
+
+function checkAct1Done() {
+  if (act1Progress.every(Boolean)) {
+    document.getElementById('btn-act1').disabled = false;
+  }
+}
+
+function check1a() {
+  const p = parseFloat(document.getElementById('in-1a-p').value);
+  const q = parseFloat(document.getElementById('in-1a-q').value);
+  att1a++;
+  if (p===40 && q===140) {
+    markCorrect('qb-1a',['in-1a-p','in-1a-q']);
+    showFeedback('fb-1a','correct','✓ Correct! Setting Q<sup>S</sup>=Q<sup>D</sup>: −20+4P = 300−4P → 8P=320 → P*=40, Q*=140. This is the autarky equilibrium — no trade.');
+    act1Progress[0]=true;
+    ftLevel = Math.max(ftLevel, 1); drawFT(ftLevel);
+    unlock('qb-1b'); checkAct1Done();
+  } else if (att1a===1) {
+    showFeedback('fb-1a','hint','Hint: Set Q<sup>S</sup> = Q<sup>D</sup>: −20 + 4P = 300 − 4P. Solve for P first, then substitute back to find Q.');
+  } else {
+    showFeedback('fb-1a','wrong','Set −20+4P = 300−4P → 8P = 320 → P = 40. Then Q = −20+4(40) = 140.');
+  }
+}
+
+function check1b() {
+  const qs = parseFloat(document.getElementById('in-1b-qs').value);
+  const qd = parseFloat(document.getElementById('in-1b-qd').value);
+  att1b++;
+  if (qs===60 && qd===220) {
+    markCorrect('qb-1b',['in-1b-qs','in-1b-qd']);
+    showFeedback('fb-1b','correct','✓ Correct! Q<sup>S</sup> = −20+4(20) = 60. Q<sup>D</sup> = 300−4(20) = 220.');
+    act1Progress[1]=true;
+    ftLevel = Math.max(ftLevel, 2); drawFT(ftLevel);
+    unlock('qb-1c'); checkAct1Done();
+  } else if (att1b===1) {
+    showFeedback('fb-1b','hint','Hint: Plug P = P<sup>W</sup> = $20 directly into both equations.');
+  } else {
+    showFeedback('fb-1b','wrong','Plug in P=20: Q<sup>S</sup> = −20+4×20 = 60. Q<sup>D</sup> = 300−4×20 = 220.');
+  }
+}
+
+function check1c() {
+  const m = parseFloat(document.getElementById('in-1c').value);
+  att1c++;
+  if (m===160) {
+    markCorrect('qb-1c',['in-1c']);
+    showFeedback('fb-1c','correct','✓ Correct! Imports = Q<sup>D</sup> − Q<sup>S</sup> = 220 − 60 = 160. Home produces 60 but consumes 220, so it imports the difference.');
+    act1Progress[2]=true;
+    ftLevel = Math.max(ftLevel, 3); drawFT(ftLevel);
+    unlock('qb-1d'); checkAct1Done();
+  } else if (att1c===1) {
+    showFeedback('fb-1c','hint','Hint: Imports = Q<sup>D</sup> − Q<sup>S</sup> at the world price.');
+  } else {
+    showFeedback('fb-1c','wrong','Imports = 220 − 60 = 160.');
+  }
+}
+
+function check1d() {
+  const cs = parseFloat(document.getElementById('in-1d-cs').value);
+  const ps = parseFloat(document.getElementById('in-1d-ps').value);
+  att1d++;
+  if (cs===6050 && ps===450) {
+    markCorrect('qb-1d',['in-1d-cs','in-1d-ps']);
+    showFeedback('fb-1d','correct','✓ Correct! CS = ½×(75−20)×220 = ½×55×220 = 6,050. PS = ½×(20−5)×60 = ½×15×60 = 450. Supply P-intercept: set Q<sup>S</sup>=0 → 0=−20+4P → P=5.');
+    act1Progress[3]=true;
+    ftLevel = Math.max(ftLevel, 4); drawFT(ftLevel);
+    unlock('qb-1e'); checkAct1Done();
+  } else if (att1d===1) {
+    showFeedback('fb-1d','hint','Hint: Demand intercept P<sub>max</sub>: set Q<sup>D</sup>=0 → P=75. Supply intercept P<sub>min</sub>: set Q<sup>S</sup>=0 → P=5. Then CS=½×(75−20)×220, PS=½×(20−5)×60.');
+  } else {
+    let hint = '';
+    if (cs!==6050) hint += `CS = ½×(75−20)×220 = 6,050. `;
+    if (ps!==450) hint += `PS = ½×(20−5)×60 = 450.`;
+    showFeedback('fb-1d','wrong',hint);
+  }
+}
+
+function check1e() {
+  const tw = parseFloat(document.getElementById('in-1e').value);
+  att1e++;
+  if (tw===6500) {
+    markCorrect('qb-1e',['in-1e']);
+    showFeedback('fb-1e','correct','✓ Perfect! TW = CS + PS = 6,050 + 450 = 6,500. This is your free trade benchmark — any policy that reduces TW below this creates a welfare loss.');
+    act1Progress[4]=true;
+    ftLevel = Math.max(ftLevel, 5); drawFT(ftLevel);
+    checkAct1Done();
+  } else if (att1e===1) {
+    showFeedback('fb-1e','hint','Hint: For a small country importing, Total Welfare = CS + PS (no tariff revenue yet).');
+  } else {
+    showFeedback('fb-1e','wrong','TW = CS + PS = 6,050 + 450 = 6,500.');
+  }
+}
+
+// BRIDGE
+let bridgeAttempts = 0;
+function selectBridge(opt) {
+  bridgeAttempts++;
+  ['A','B','C','D'].forEach(o => {
+    document.getElementById('mc-'+o).className = 'mc-option';
+  });
+  const fb = document.getElementById('fb-bridge');
+  fb.classList.remove('hidden');
+
+  if (opt === 'A') {
+    document.getElementById('mc-A').classList.add('selected-correct');
+    fb.className = 'feedback correct-msg';
+    fb.innerHTML = `✓ Correct! Ad valorem means "according to value." The tariff is a percentage of the world price: P<sub>t</sub> = P<sup>W</sup> × (1+t) = $20 × 1.25 = <strong>$25</strong>. For a small country, the export supply curve is horizontal (fixed P<sup>W</sup>). The ad valorem tariff shifts it up to a new horizontal at P<sup>W</sup>×(1+t) — a parallel shift, just like specific tariff, but the <em>size</em> of the shift scales with the world price.`;
+    document.getElementById('btn-bridge').classList.remove('hidden');
+  } else {
+    document.getElementById('mc-'+opt).classList.add('selected-wrong');
+    const msgs = {
+      B: `Not quite. A $10 specific tariff would give $30. But our policy is a 25% <em>ad valorem</em> tariff: P<sup>W</sup>×(1+0.25) = $20×1.25 = $25. The percentage is applied to the world price, not added as a fixed dollar.`,
+      C: `Not quite. The export supply curve for a small country is horizontal (world price is fixed regardless of how much Home imports). The tariff shifts it to a new horizontal — it doesn't create a slope.`,
+      D: `Not quite. The export supply curve stays horizontal — the small country assumption means foreign exporters supply any quantity at the world price. The tariff shifts the curve up in parallel, not rotates it.`
+    };
+    fb.className = 'feedback hint-msg';
+    fb.innerHTML = msgs[opt] + (bridgeAttempts>=2?' <strong>Hint: the ad valorem formula is P<sup>W</sup>×(1+t).</strong>':'');
+  }
+}
+
+// BRIDGE — LARGE COUNTRY
+let bridgeLargeAttempts = 0;
+
+function goToBridgeLarge() {
+  document.getElementById('act-bridge-large').classList.remove('hidden');
+  document.getElementById('act-bridge-large').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function selectBridgeLarge(opt) {
+  bridgeLargeAttempts++;
+  ['A','B','C','D'].forEach(o => {
+    document.getElementById('mc-L'+o).className = 'mc-option';
+  });
+  const fb = document.getElementById('fb-bridge-large');
+  fb.classList.remove('hidden');
+
+  if (opt === 'D') {
+    document.getElementById('mc-LD').classList.add('selected-correct');
+    fb.className = 'feedback correct-msg';
+    fb.innerHTML = `✓ Correct! For a large country the export supply curve slopes upward. An ad valorem tariff multiplies every price on that curve by (1+t), so a point originally at price P shifts up to P×(1+t). Since higher-P points shift up <em>more</em> in absolute dollar terms (P×t grows with P), the new curve is <strong>steeper</strong> than the original — it rotates upward rather than shifting in parallel. Compare this to Graph C: a specific tariff (+t dollars) would shift every point up by the <em>same</em> fixed amount, giving a parallel curve with identical slope.`;
+    document.getElementById('btn-bridge-large').classList.remove('hidden');
+  } else {
+    document.getElementById('mc-L'+opt).classList.add('selected-wrong');
+    const msgs = {
+      A: `Not quite. Graph A shows a horizontal export supply curve — that's the <em>small country</em> assumption, where Home cannot affect the world price. For a large country, foreign exporters must be offered higher prices to supply more, giving an upward-sloping export supply curve.`,
+      B: `Not quite. A horizontal curve becoming upward sloping doesn't make sense — the shape of the export supply curve reflects the foreign country's cost structure, which doesn't change when Home imposes a tariff. The tariff shifts the curve, it doesn't change its fundamental shape from horizontal to sloped.`,
+      C: `Close — you correctly identified that a large country has an upward-sloping export supply curve! But Graph C shows a <em>parallel</em> shift (same vertical distance at every quantity). That's what a <strong>specific tariff</strong> (+t dollars) would do. An <em>ad valorem</em> tariff multiplies by (1+t), so the shift is proportional to the price level — larger at high prices, creating a steeper curve.`
+    };
+    fb.className = 'feedback hint-msg';
+    fb.innerHTML = msgs[opt] + (bridgeLargeAttempts >= 2 ? ' <strong>Hint: ad valorem means the shift is proportional to the price — higher points on the supply curve shift up more.</strong>' : '');
+  }
+}
+let att2a=0, att2b=0, att2c=0, att2d=0, att2e=0;
+let act2Progress = [false,false,false,false,false];
+
+function checkAct2Done() {
+  if (act2Progress.every(Boolean)) {
+    document.getElementById('tariff-summary').classList.remove('hidden');
+    document.getElementById('btn-act2').classList.remove('hidden');
+  }
+}
+
+function check2a() {
+  const qs = parseFloat(document.getElementById('in-2a-qs').value);
+  const qd = parseFloat(document.getElementById('in-2a-qd').value);
+  att2a++;
+  if (qs===80 && qd===200) {
+    markCorrect('qb-2a',['in-2a-qs','in-2a-qd']);
+    showFeedback('fb-2a','correct','✓ Correct! Q<sup>S</sup> = −20+4(25) = 80. Q<sup>D</sup> = 300−4(25) = 200. Domestic producers expand output; consumers reduce consumption.');
+    act2Progress[0]=true;
+    tariffLevel = Math.max(tariffLevel, 1); drawTariff(tariffLevel);
+    unlock('qb-2b'); checkAct2Done();
+  } else if (att2a===1) {
+    showFeedback('fb-2a','hint','Hint: Plug P<sub>t</sub> = $25 into both supply and demand equations.');
+  } else {
+    showFeedback('fb-2a','wrong','Q<sup>S</sup> = −20+4×25 = 80. Q<sup>D</sup> = 300−4×25 = 200.');
+  }
+}
+
+function check2b() {
+  const m = parseFloat(document.getElementById('in-2b').value);
+  att2b++;
+  if (m===120) {
+    markCorrect('qb-2b',['in-2b']);
+    showFeedback('fb-2b','correct','✓ Correct! Imports = Q<sup>D</sup>−Q<sup>S</sup> = 200−80 = 120. Down from 160 under free trade — the tariff discouraged 40 units of imports.');
+    act2Progress[1]=true;
+    tariffLevel = Math.max(tariffLevel, 2); drawTariff(tariffLevel);
+    unlock('qb-2c'); checkAct2Done();
+  } else if (att2b===1) {
+    showFeedback('fb-2b','hint','Hint: Same formula as before — imports = Q<sup>D</sup> − Q<sup>S</sup> at the new price.');
+  } else {
+    showFeedback('fb-2b','wrong','Imports = 200 − 80 = 120.');
+  }
+}
+
+function check2c() {
+  const cs = parseFloat(document.getElementById('in-2c-cs').value);
+  const ps = parseFloat(document.getElementById('in-2c-ps').value);
+  att2c++;
+  if (cs===5000 && ps===800) {
+    markCorrect('qb-2c',['in-2c-cs','in-2c-ps']);
+    showFeedback('fb-2c','correct','✓ Correct! CS = ½×(75−25)×200 = ½×50×200 = 5,000. PS = ½×(25−5)×80 = ½×20×80 = 800. CS fell, PS rose — the tariff redistributes from consumers to producers.');
+    act2Progress[2]=true;
+    tariffLevel = Math.max(tariffLevel, 3); drawTariff(tariffLevel);
+    unlock('qb-2d'); checkAct2Done();
+  } else if (att2c===1) {
+    showFeedback('fb-2c','hint','Hint: Same triangle formulas, but now use P<sub>t</sub>=25, Q<sup>S</sup>=80, Q<sup>D</sup>=200.');
+  } else {
+    let h='';
+    if(cs!==5000) h+=`CS = ½×(75−25)×200 = 5,000. `;
+    if(ps!==800) h+=`PS = ½×(25−5)×80 = 800.`;
+    showFeedback('fb-2c','wrong',h);
+  }
+}
+
+function check2d() {
+  const tr = parseFloat(document.getElementById('in-2d').value);
+  att2d++;
+  if (tr===600) {
+    markCorrect('qb-2d',['in-2d']);
+    showFeedback('fb-2d','correct','✓ Correct! TR = (P<sub>t</sub>−P<sup>W</sup>) × M = ($25−$20) × 120 = $5 × 120 = $600. The government collects $5 per bag on 120 bags of imports.');
+    act2Progress[3]=true;
+    tariffLevel = Math.max(tariffLevel, 4); drawTariff(tariffLevel);
+    unlock('qb-2e'); checkAct2Done();
+  } else if (att2d===1) {
+    showFeedback('fb-2d','hint','Hint: TR = (domestic price − world price) × quantity imported = tariff per unit × imports.');
+  } else {
+    showFeedback('fb-2d','wrong','TR = ($25−$20) × 120 = $5 × 120 = $600.');
+  }
+}
+
+function check2e() {
+  const dwl = parseFloat(document.getElementById('in-2e').value);
+  att2e++;
+  if (dwl===100) {
+    markCorrect('qb-2e',['in-2e']);
+    showFeedback('fb-2e','correct','✓ Correct! Triangle b = ½×(25−20)×(80−60) = ½×5×20 = 50. Triangle d = ½×(25−20)×(220−200) = ½×5×20 = 50. Total DWL = 100. This is the pure welfare loss — it disappears into thin air, not transferred to anyone.');
+    act2Progress[4]=true;
+    tariffLevel = Math.max(tariffLevel, 5); drawTariff(tariffLevel);
+    checkAct2Done();
+  } else if (att2e===1) {
+    showFeedback('fb-2e','hint','Hint: Triangle b (production distortion): base = (Q<sup>S</sup><sub>new</sub>−Q<sup>S</sup><sub>old</sub>), height = (P<sub>t</sub>−P<sup>W</sup>). Triangle d (consumption distortion): base = (Q<sup>D</sup><sub>old</sub>−Q<sup>D</sup><sub>new</sub>), height = (P<sub>t</sub>−P<sup>W</sup>).');
+  } else {
+    showFeedback('fb-2e','wrong','b = ½×5×(80−60) = 50. d = ½×5×(220−200) = 50. DWL = 100.');
+  }
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goToBridge() {
+  document.getElementById('act-bridge').classList.remove('hidden');
+  document.getElementById('prog-bridge').classList.remove('active');
+  document.getElementById('prog-1').classList.remove('active');
+  document.getElementById('prog-1').classList.add('done');
+  document.getElementById('prog-bridge').classList.add('active');
+  document.getElementById('act-bridge').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function goToAct2() {
+  document.getElementById('act2').classList.remove('hidden');
+  document.getElementById('prog-bridge').classList.remove('active');
+  document.getElementById('prog-bridge').classList.add('done');
+  document.getElementById('prog-2').classList.add('active');
+  tariffLevel = 0; drawTariff(tariffLevel);
+  document.getElementById('act2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function goToAct3() {
+  document.getElementById('act3').classList.remove('hidden');
+  document.getElementById('prog-2').classList.remove('active');
+  document.getElementById('prog-2').classList.add('done');
+  document.getElementById('prog-3').classList.add('active');
+  document.getElementById('act3').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function showQuotaCase(c) {
+  // Only allow switching to unlocked cases
+  if (c==='B' && document.getElementById('quota-B').classList.contains('hidden') &&
+      !document.getElementById('btn-to-caseB')) return;
+  if (c==='C' && document.getElementById('quota-C').classList.contains('hidden') &&
+      !document.getElementById('btn-to-caseC')) return;
+
+  ['A','B','C'].forEach(x => {
+    const el = document.getElementById('quota-'+x);
+    if (el) el.classList.add('hidden');
+    const tab = document.getElementById('qtab-'+x);
+    if (tab) tab.classList.remove('active');
+  });
+  const show = document.getElementById('quota-'+c);
+  if (show) show.classList.remove('hidden');
+  const tab = document.getElementById('qtab-'+c);
+  if (tab) tab.classList.add('active');
+
+  // Draw the graph for this case if needed
+  if (c==='A') makeGraph('svg-quota-A','legend-quota-A','quota-A');
+  if (c==='B') { makeGraph('svg-quota-B','legend-quota-B','quota-B'); }
+  if (c==='C') { makeGraph('svg-quota-C','legend-quota-C','quota-C'); }
+}
+
+function showFinalSummary() {
+  document.getElementById('quota-final-summary').classList.remove('hidden');
+  document.getElementById('quota-final-summary').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ACT 4 check functions
+let att4a=0, att4c=0, att4e=0;
+
+function check4a() {
+  const m = parseFloat(document.getElementById('in-4a').value);
+  att4a++;
+  if (m===120) {
+    markCorrect('qb-4a',['in-4a']);
+    showFeedback('fb-4a','correct','✓ Correct! Under the tariff, Home imported 120 million bags (Q<sup>D</sup>−Q<sup>S</sup> = 200−80). Setting the quota at 120 replicates the same domestic price of $25 and the same quantities. The quota rent = ($25−$20)×120 = <strong>$600</strong>.');
+    document.getElementById('quota-section-A').classList.remove('hidden');
+    makeGraph('svg-quota-A','legend-quota-A','quota-A');
+    document.getElementById('quota-section-A').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else if (att4a===1) {
+    showFeedback('fb-4a','hint','Hint: Look back at Act 3. After the 25% tariff was imposed, how many bags did Home import?');
+  } else {
+    showFeedback('fb-4a','wrong','Under the tariff, imports = Q<sup>D</sup>−Q<sup>S</sup> = 200−80 = 120. The equivalent quota must allow the same 120 bags.');
+  }
+}
+
+function check4b(ans) {
+  document.getElementById('btn-4b-true').disabled = true;
+  document.getElementById('btn-4b-false').disabled = true;
+  if (ans==='true') {
+    document.getElementById('btn-4b-true').style.background = 'var(--green)';
+    showFeedback('fb-4b','correct','✓ True! In a perfectly competitive auction, importers bid up the license price until it equals the profit opportunity — exactly $5 per bag. Total auction revenue = $5 × 120 = $600, identical to the tariff revenue. This is why economists say a quota with auctioned licenses is equivalent to a tariff.');
+    document.getElementById('table-A').classList.remove('hidden');
+  } else {
+    document.getElementById('btn-4b-false').style.background = 'var(--red)';
+    showFeedback('fb-4b','hint','Not quite. Think about what a competitive importer would be willing to pay for a license that lets them buy at $20 and sell at $25. In a competitive auction, bids will be driven up to exactly that profit margin.');
+    // Re-enable after wrong answer
+    setTimeout(() => {
+      document.getElementById('btn-4b-true').disabled = false;
+      document.getElementById('btn-4b-false').disabled = false;
+    }, 1500);
+  }
+}
+
+function check4c(ans) {
+  const btns = document.querySelectorAll('#mc-4c-opts button');
+  btns.forEach(b => b.disabled = true);
+  if (ans==='C') {
+    btns[2].style.background = 'var(--green)'; btns[2].style.color = '#fff';
+    showFeedback('fb-4c','correct','✓ Correct! Under a VER, the $600 rent flows to foreign exporters and Home welfare is $5,800. Switching to an auctioned quota keeps the same import quantity and domestic price, but now the government captures the $600 instead of foreigners. Home welfare rises from $5,800 back to $6,400 — a $600 improvement. The DWL triangles remain, since import quantity is unchanged.');
+    document.getElementById('table-B').classList.remove('hidden');
+  } else {
+    btns[{'A':0,'B':1,'D':3}[ans]].style.background = 'var(--red)'; btns[{'A':0,'B':1,'D':3}[ans]].style.color = '#fff';
+    const msgs = {
+      A: 'Not quite. An auction does not add new distortions — it just changes who collects the rent. The domestic price and import quantity stay the same, so CS and PS are unchanged.',
+      B: 'Not quite. It matters a great deal who holds the licenses. Under a VER, the rent leaves the country; under an auction, the government keeps it. That is a $600 difference in Home welfare.',
+      D: 'Not quite. The import quantity is the same under both policies, so the DWL triangles persist — they are not recovered. Only the $600 rent allocation changes.'
+    };
+    showFeedback('fb-4c','hint', msgs[ans]);
+    setTimeout(() => btns.forEach(b => b.disabled = false), 1500);
+  }
+}
+
+function check4d(ans) {
+  const btns = document.querySelectorAll('#mc-4d-opts button');
+  btns.forEach(b => b.disabled = true);
+  if (ans==='C') {
+    btns[2].style.background = 'var(--green)'; btns[2].style.color = '#fff';
+    showFeedback('fb-4d','correct','✓ Correct! Domestic importers who hold the licenses buy coffee abroad at P<sup>W</sup>=$20 and sell domestically at $25, pocketing the $5 margin on each of the 120 bags. Total rent = $600. The government gets nothing, but since the rent stays in the Home country, total Home welfare is the same as under the tariff — for now.');
+    unlock('qb-4e');
+  } else {
+    btns[{'A':0,'B':1,'D':3}[ans]].style.background = 'var(--red)'; btns[{'A':0,'B':1,'D':3}[ans]].style.color = '#fff';
+    const msgs = {
+      A: 'Not quite — in Case C, the government gives away licenses for free, so it collects nothing.',
+      B: 'That is Case B (VER). In Case C, the government gives licenses to domestic parties.',
+      D: 'Domestic non-importing producers (coffee farmers) already benefit from the higher price through PS. The quota rent goes to whoever holds the import license.'
+    };
+    showFeedback('fb-4d','hint', msgs[ans]);
+    setTimeout(() => btns.forEach(b => b.disabled = false), 1500);
+  }
+}
+
+function check4e() {
+  const spend = parseFloat(document.getElementById('in-4e').value);
+  att4e++;
+  if (spend===600) {
+    markCorrect('qb-4e',['in-4e']);
+    showFeedback('fb-4e','correct','✓ Correct! If the prize is worth $600, a rational agent will spend up to $600 to obtain it. In a competitive environment where many importers are vying for the same licenses, the total resources burned in lobbying, legal fees, and influence-seeking can consume the entire $600 rent. This is <strong>rent-seeking behavior</strong> — socially wasteful activity that converts a transfer into a real loss. Home welfare falls from $6,400 to $5,800, identical to the VER outcome.');
+    document.getElementById('table-C').classList.remove('hidden');
+    document.getElementById('btn-to-summary').classList.remove('hidden');
+  } else if (att4e===1) {
+    showFeedback('fb-4e','hint','Hint: If a license guarantees you $600 in profit, you would rationally spend any amount <em>up to</em> $600 trying to get it. In competitive equilibrium, what happens to that spending?');
+  } else {
+    showFeedback('fb-4e','wrong','The rent is worth exactly $600. In competitive rent-seeking, parties spend up to $600 total competing for it — the entire rent is dissipated. Answer: $600.');
+  }
+}
+
+function sendCompletion() {
+  const name = document.getElementById('student-name').value.trim();
+  const fb = document.getElementById('email-feedback');
+  if (!name) {
+    fb.textContent = 'Please enter your name first.';
+    fb.style.color = 'var(--red)';
+    return;
+  }
+  const subject = encodeURIComponent('Trade Policy Game Completed');
+  const body = encodeURIComponent(`${name} has completed the Trade Policy Game!\n\nCourse: ECON 326 — International Trade\nGame: Coffee Bean Trade Policy (Small Country, Tariff & Quota)`);
+  window.location.href = `mailto:jheo1@oberlin.edu?subject=${subject}&body=${body}`;
+  fb.textContent = `Opening your email client to send a completion notice for ${name}...`;
+  fb.style.color = 'var(--green)';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', () => {
+  ftLevel = 0;
+  drawFT(ftLevel);
+});
+</script>
+</body>
+</html>
