@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coffee Bean Monopoly — ECON 326</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0a06;
+  --surface: #161009;
+  --card: #1e1508;
+  --border: #3a2a10;
+  --border-light: #4a3518;
+  --ink: #f0e6cc;
+  --ink-dim: #a08060;
+  --ink-dimmer: #604830;
+  --gold: #c8922a;
+  --gold-light: #e8b84a;
+  --gold-pale: #3a2a08;
+  --amber: #d4700a;
+  --green: #4a8a3a;
+  --green-light: #6aaa5a;
+  --green-pale: #0a2008;
+  --red: #a03020;
+  --red-light: #c04030;
+  --red-pale: #200808;
+  --blue: #2a5080;
+  --blue-light: #4a70a0;
+  --blue-pale: #081828;
+  --purple: #603880;
+  --shadow: rgba(0,0,0,0.6);
+  --cs-col: #4a8a3a;
+  --ps-col: #c8922a;
+  --mr-col: #c04030;
+  --mc-col: #4a70a0;
+  --pw-col: #d4700a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Crimson Pro', Georgia, serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* Grain texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 100px;
+}
+
+/* ── HEADER ── */
+header {
+  text-align: center;
+  padding: 56px 0 40px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 44px;
+}
+
+.course-tag {
+  font-family: 'Crimson Pro', serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 14px;
+}
+
+header h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(30px, 5vw, 52px);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.1;
+  margin-bottom: 10px;
+}
+
+header h1 em {
+  color: var(--gold-light);
+  font-style: italic;
+}
+
+header p {
+  color: var(--ink-dim);
+  font-size: 16px;
+  font-style: italic;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* ── PROGRESS ── */
+.progress-bar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 44px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-step {
+  flex: 1;
+  padding: 11px 8px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--ink-dimmer);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  transition: all 0.4s ease;
+}
+.progress-step:last-child { border-right: none; }
+.progress-step.active { background: var(--gold-pale); color: var(--gold-light); border-color: var(--gold); }
+.progress-step.done { background: #1a1a08; color: var(--gold); }
+.progress-step .sn { display: block; font-size: 15px; margin-bottom: 2px; font-family: 'Cormorant Garamond', serif; }
+
+/* ── NARRATIVE ALERT ── */
+.narrative {
+  background: linear-gradient(135deg, #1a0a02, #2a1408);
+  border: 1px solid var(--amber);
+  border-radius: 4px;
+  padding: 24px 28px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+  animation: fadeUp 0.5s ease;
+}
+.narrative::before {
+  content: '☕';
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 64px;
+  opacity: 0.07;
+}
+.narrative .n-tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 6px;
+}
+.narrative h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.narrative p { font-size: 14px; color: var(--ink-dim); line-height: 1.8; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 32px;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 24px var(--shadow);
+  animation: fadeUp 0.4s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.act-badge {
+  background: var(--gold-pale);
+  color: var(--gold-light);
+  border: 1px solid var(--gold);
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  white-space: nowrap;
+  margin-top: 3px;
+  text-transform: uppercase;
+}
+.act-badge.teal { background: var(--blue-pale); color: var(--blue-light); border-color: var(--blue-light); }
+.act-badge.red { background: var(--red-pale); color: var(--red-light); border-color: var(--red-light); }
+
+.card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.card-title small {
+  display: block;
+  font-family: 'Crimson Pro', serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink-dim);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* ── SETUP BOX ── */
+.setup-box {
+  background: #120d04;
+  border-left: 3px solid var(--gold);
+  padding: 16px 20px;
+  border-radius: 0 3px 3px 0;
+  margin-bottom: 24px;
+}
+.setup-box h3 {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.setup-box p, .setup-box li { font-size: 14px; color: var(--ink-dim); line-height: 1.8; }
+
+.eq-block {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  color: var(--gold-light);
+  background: #0a0802;
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 3px;
+  display: inline-block;
+  margin: 4px 4px;
+}
+
+/* ── GRAPH ── */
+.graph-container {
+  background: #141008;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 16px;
+  margin: 20px 0;
+  overflow-x: auto;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.ls { width: 14px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+.ls.sq { height: 12px; border-radius: 2px; }
+
+/* ── QUESTIONS — one-at-a-time ── */
+.q-panel { display: flex; flex-direction: column; gap: 0; }
+
+/* completed step: collapsed green summary row */
+.step-done {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--green-pale);
+  border: 1px solid var(--green);
+  border-radius: 3px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--green-light);
+  animation: fadeUp 0.3s ease;
+}
+.step-done .sd-check { font-size: 15px; flex-shrink: 0; }
+.step-done .sd-label { font-weight: 600; margin-right: 6px; }
+.step-done .sd-ans { color: var(--ink); font-family: 'Cormorant Garamond', serif; font-size: 15px; }
+
+/* active step card */
+.q-block {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 18px 20px;
+  background: var(--surface);
+  transition: border-color 0.3s;
+  animation: fadeUp 0.35s ease;
+}
+.q-block.correct { border-color: var(--green); background: var(--green-pale); }
+
+.q-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+.q-text { font-size: 14px; color: var(--ink); margin-bottom: 12px; line-height: 1.7; }
+.q-text em { color: var(--gold-light); font-style: normal; }
+
+.input-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.ans-input {
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  padding: 7px 12px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  width: 100px;
+  color: var(--ink);
+  background: #0a0802;
+  transition: border-color 0.2s;
+}
+.ans-input:focus { outline: none; border-color: var(--gold); }
+.ans-input.ok { border-color: var(--green); background: var(--green-pale); }
+.ans-input.bad { border-color: var(--red); }
+
+.check-btn {
+  background: var(--gold-pale);
+  color: var(--gold-light);
+  border: 1px solid var(--gold);
+  padding: 8px 18px;
+  border-radius: 3px;
+  font-family: 'Crimson Pro', serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.check-btn:hover { background: var(--gold); color: #0a0802; }
+
+.fb {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 8px 12px;
+  border-radius: 3px;
+}
+.fb.ok { background: var(--green-pale); color: var(--green-light); border-left: 3px solid var(--green); }
+.fb.hint { background: #1a1200; color: #c8a050; border-left: 3px solid var(--gold); }
+.fb.bad { background: var(--red-pale); color: var(--red-light); border-left: 3px solid var(--red); }
+.hidden { display: none; }
+
+/* ── CONTINUE BTN ── */
+.continue-btn {
+  background: var(--green-pale);
+  color: var(--green-light);
+  border: 1px solid var(--green);
+  padding: 14px 36px;
+  border-radius: 3px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  display: block;
+  margin: 28px auto 0;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+  box-shadow: 0 2px 12px rgba(74,138,58,0.2);
+}
+.continue-btn:hover { background: var(--green); color: #fff; transform: translateY(-1px); }
+.continue-btn:disabled { background: #1a1408; border-color: var(--border); color: var(--ink-dimmer); cursor: default; transform: none; }
+
+/* ── WELFARE TABLE ── */
+.wtable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-size: 14px;
+}
+.wtable th {
+  background: #1a1008;
+  color: var(--gold-light);
+  padding: 10px 14px;
+  text-align: left;
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.3px;
+}
+.wtable td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--ink-dim); }
+.wtable tr:nth-child(even) td { background: #120d04; }
+.wtable .total-row td { font-weight: 600; color: var(--ink); border-top: 1px solid var(--border-light); background: #1a1408 !important; }
+.pos { color: var(--green-light) !important; }
+.neg { color: var(--red-light) !important; }
+.hi { color: var(--gold-light) !important; font-weight: 600; }
+
+/* ── INSIGHT BOX ── */
+.insight {
+  border-radius: 3px;
+  padding: 14px 18px;
+  font-size: 13px;
+  line-height: 1.8;
+  margin-top: 14px;
+}
+.insight.gold { background: var(--gold-pale); border-left: 3px solid var(--gold); color: #c8a050; }
+.insight.red { background: var(--red-pale); border-left: 3px solid var(--red-light); color: var(--red-light); }
+.insight.green { background: var(--green-pale); border-left: 3px solid var(--green); color: var(--green-light); }
+
+/* ── FINAL SUMMARY ── */
+.summary-banner {
+  background: linear-gradient(135deg, #0a1a08, #121e08);
+  border: 1px solid var(--green);
+  border-radius: 4px;
+  padding: 24px 28px;
+  margin-top: 24px;
+}
+.summary-banner h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--green-light);
+  margin-bottom: 12px;
+}
+.summary-banner p { font-size: 14px; color: var(--ink-dim); line-height: 1.9; }
+
+/* completion box */
+.completion-box {
+  background: #0a0d04;
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  padding: 24px;
+  text-align: center;
+  margin-top: 28px;
+}
+.completion-box h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  color: var(--gold-light);
+  margin-bottom: 6px;
+}
+.completion-box p { font-size: 13px; color: var(--ink-dim); margin-bottom: 18px; }
+.name-input {
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+  padding: 9px 16px;
+  font-family: 'Crimson Pro', serif;
+  font-size: 14px;
+  width: 220px;
+  color: var(--ink);
+  background: #0a0802;
+  margin-right: 10px;
+}
+.email-btn {
+  background: var(--gold-pale);
+  color: var(--gold-light);
+  border: 1px solid var(--gold);
+  padding: 10px 22px;
+  border-radius: 3px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.email-btn:hover { background: var(--gold); color: #0a0802; }
+#email-fb { margin-top: 10px; font-size: 13px; color: var(--green-light); font-style: italic; min-height: 20px; }
+
+@media (max-width: 600px) {
+  .card { padding: 20px 16px; }
+  .progress-step { font-size: 9px; }
+  .act-layout { flex-direction: column !important; }
+  .act-graph-col { position: static !important; width: 100% !important; }
+  .act-q-col { width: 100% !important; }
+}
+
+/* ── WIDE LAYOUT ── */
+.act-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  margin-top: 20px;
+}
+.act-graph-col {
+  flex: 0 0 50%;
+  width: 50%;
+  position: sticky;
+  top: 16px;
+}
+.act-q-col {
+  flex: 1;
+  min-width: 0;
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<header>
+  <div class="course-tag">ECON 326 · International Trade · Imperfect Competition</div>
+  <h1>The Coffee Cooperative<br><em>When the Market Becomes a Monopoly</em></h1>
+  <p>Years after the tariff and quota wars, most small farmers were driven out. The survivors consolidated into a single powerful cooperative — effectively a monopolist. Same product, same world price, radically different results.</p>
+</header>
+
+<div class="progress-bar">
+  <div class="progress-step active" id="prog-1"><span class="sn">①</span>No-Trade</div>
+  <div class="progress-step" id="prog-2"><span class="sn">②</span>Free Trade</div>
+  <div class="progress-step" id="prog-3"><span class="sn">③</span>Tariff</div>
+  <div class="progress-step" id="prog-4"><span class="sn">④</span>Quota</div>
+  <div class="progress-step" id="prog-5"><span class="sn">⑤</span>Verdict</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- ACT 1 — NO TRADE MONOPOLY EQM -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="card" id="act1">
+  <div class="card-header">
+    <div class="act-badge">ACT 1</div>
+    <div class="card-title">No-Trade Monopoly Equilibrium
+      <small>The cooperative controls the domestic coffee market</small>
+    </div>
+  </div>
+
+  <div class="setup-box">
+    <h3>Market Setup</h3>
+    <p style="margin-bottom:10px">The Home Coffee Cooperative is the <strong style="color:var(--gold-light)">sole domestic producer</strong>. It faces the same demand as before, but now sets its own price. It has constant marginal cost MC = $15/bag.</p>
+    <div style="margin: 10px 0">
+      <span class="eq-block">Q<sup>D</sup> = 300 − 4P &nbsp;|&nbsp; P = 75 − Q/4</span>
+      <span class="eq-block">MR = 75 − Q/2</span>
+      <span class="eq-block">MC = $15/bag</span>
+    </div>
+    <p style="font-size:13px; color:var(--ink-dimmer); margin-top:8px; font-style:italic">Note: MR has the same intercept as demand but twice the slope. Under perfect competition, MR = P. Under monopoly, MR &lt; P.</p>
+  </div>
+
+  <div class="act-layout">
+    <div class="act-graph-col">
+      <div class="graph-container" style="margin:0">
+        <svg id="svg-1" viewBox="0 0 560 360" width="100%"></svg>
+        <div class="legend" id="leg-1"></div>
+      </div>
+    </div>
+    <div class="act-q-col">
+      <p style="font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:14px">Find the no-trade monopoly equilibrium:</p>
+      <div class="q-panel" id="qpanel-1">
+
+        <div class="q-block" id="qb-1a">
+          <div class="q-label">Step 1 of 3 — Monopoly Output</div>
+          <div class="q-text">The monopolist maximizes profit by setting <em>MR = MC</em>. Solve for Q<sup>M</sup>.
+            <br><span style="font-size:13px; color:var(--ink-dim); font-style:italic">75 − Q/2 = 15. Solve for Q.</span>
+          </div>
+          <div class="input-row">
+            <span style="font-size:14px;color:var(--ink-dim)">Q<sup>M</sup> =</span>
+            <input class="ans-input" id="in-1a" type="number" placeholder="?">
+            <button class="check-btn" onclick="check1a()">Check</button>
+          </div>
+          <div class="fb hidden" id="fb-1a"></div>
+        </div>
+
+        <div class="hidden" id="qb-1b">
+          <div class="q-block">
+            <div class="q-label">Step 2 of 3 — Monopoly Price</div>
+            <div class="q-text">Substitute Q<sup>M</sup> into the <em>demand curve</em> to find the monopoly price P<sup>M</sup>.</div>
+            <div class="input-row">
+              <span style="font-size:14px;color:var(--ink-dim)">P<sup>M</sup> = $</span>
+              <input class="ans-input" id="in-1b" type="number" placeholder="?">
+              <button class="check-btn" onclick="check1b()">Check</button>
+            </div>
+            <div class="fb hidden" id="fb-1b"></div>
+          </div>
+        </div>
+
+        <div class="hidden" id="qb-1c">
+          <div class="q-block">
+            <div class="q-label">Step 3 of 3 — Compare to Perfect Competition</div>
+            <div class="q-text">Under perfect competition, P = MC. What would the competitive price and quantity be?</div>
+            <div class="input-row">
+              <span style="font-size:14px;color:var(--ink-dim)">P<sup>C</sup> = $</span>
+              <input class="ans-input" id="in-1c-p" type="number" placeholder="?">
+              <span style="font-size:14px;color:var(--ink-dim)">, &nbsp;Q<sup>C</sup> =</span>
+              <input class="ans-input" id="in-1c-q" type="number" placeholder="?">
+              <button class="check-btn" onclick="check1c()">Check</button>
+            </div>
+            <div class="fb hidden" id="fb-1c"></div>
+          </div>
+        </div>
+
+      </div>
+      <button class="continue-btn" id="btn-1" disabled onclick="goTo(2)" style="margin-top:20px">Continue to Free Trade →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- ACT 2 — FREE TRADE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="card hidden" id="act2">
+  <div class="card-header">
+    <div class="act-badge teal">ACT 2</div>
+    <div class="card-title">Free Trade — The Monopoly's Market Power Vanishes
+      <small>World price P<sup>W</sup> = $20 eliminates the cooperative's pricing power</small>
+    </div>
+  </div>
+
+  <div class="setup-box">
+    <h3>Key Insight</h3>
+    <p>Under free trade at P<sup>W</sup> = $20, foreign exporters supply any amount at that price. The cooperative <strong style="color:var(--gold-light)">cannot charge more than P<sup>W</sup></strong> — if it tried, consumers would simply buy from foreign suppliers. So the cooperative is forced to act like a price-taker, setting P = P<sup>W</sup> = MC. <em style="color:var(--amber)">Free trade eliminates monopoly power!</em></p>
+    <div style="margin-top:10px">
+      <span class="eq-block">P<sup>W</sup> = $20/bag</span>
+      <span class="eq-block">Q<sup>S</sup> = −20 + 4P &nbsp;|&nbsp; P = 5 + Q/4</span>
+      <span class="eq-block">Q<sup>D</sup> = 300 − 4P &nbsp;|&nbsp; P = 75 − Q/4</span>
+    </div>
+  </div>
+
+  <div class="act-layout">
+    <div class="act-graph-col">
+      <div class="graph-container" style="margin:0">
+        <svg id="svg-2" viewBox="0 0 560 360" width="100%"></svg>
+        <div class="legend" id="leg-2"></div>
+      </div>
+    </div>
+    <div class="act-q-col">
+      <p style="font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:14px">Calculate the free trade equilibrium:</p>
+      <div class="q-panel" id="qpanel-2">
+
+        <div class="q-block" id="qb-2a">
+          <div class="q-label">Step 1 of 3 — Quantities</div>
+          <div class="q-text">At P<sup>W</sup> = $20, find domestic quantity supplied and demanded.</div>
+          <div class="input-row">
+            <span style="font-size:14px;color:var(--ink-dim)">Q<sup>S</sup> =</span>
+            <input class="ans-input" id="in-2a-s" type="number" placeholder="?">
+            <span style="font-size:14px;color:var(--ink-dim)">, &nbsp;Q<sup>D</sup> =</span>
+            <input class="ans-input" id="in-2a-d" type="number" placeholder="?">
+            <button class="check-btn" onclick="check2a()">Check</button>
+          </div>
+          <div class="fb hidden" id="fb-2a"></div>
+        </div>
+
+        <div class="hidden" id="qb-2b">
+          <div class="q-block">
+            <div class="q-label">Step 2 of 3 — Imports</div>
+            <div class="q-text">How many bags does Home import under free trade?</div>
+            <div class="input-row">
+              <span style="font-size:14px;color:var(--ink-dim)">Imports =</span>
+              <input class="ans-input" id="in-2b" type="number" placeholder="?">
+              <button class="check-btn" onclick="check2b()">Check</button>
+            </div>
+            <div class="fb hidden" id="fb-2b"></div>
+          </div>
+        </div>
+
+        <div class="hidden" id="qb-2c">
+          <div class="q-block">
+            <div class="q-label">Step 3 of 3 — True or False</div>
+            <div class="q-text">Under free trade, the monopolist produces the <em>same quantity and charges the same price</em> as a perfectly competitive industry would.</div>
+            <div class="input-row" style="gap:12px">
+              <button class="check-btn" id="btn-2c-t" onclick="check2c('true')" style="background:var(--green-pale);color:var(--green-light);border-color:var(--green)">True</button>
+              <button class="check-btn" id="btn-2c-f" onclick="check2c('false')" style="background:var(--blue-pale);color:var(--blue-light);border-color:var(--blue-light)">False</button>
+            </div>
+            <div class="fb hidden" id="fb-2c"></div>
+          </div>
+        </div>
+
+      </div>
+      <button class="continue-btn" id="btn-2" disabled onclick="goTo(3)" style="margin-top:20px">Continue to Tariff →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- ACT 3 — TARIFF -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="card hidden" id="act3">
+  <div class="card-header">
+    <div class="act-badge">ACT 3</div>
+    <div class="card-title">Ad Valorem Tariff — Still Competitive Behavior
+      <small>t = 25% · P<sub>t</sub> = $25 · Monopolist still can't price above tariff level</small>
+    </div>
+  </div>
+
+  <div class="setup-box">
+    <h3>Policy in Effect — Same as the Small Country Game</h3>
+    <p>The government imposes a 25% ad valorem tariff. Foreign exporters must now charge P<sup>W</sup>×(1+t) = $25 in the Home market. The cooperative can raise its price to $25 — but <strong style="color:var(--gold-light)">no higher</strong>, since imports are still available at $25. The cooperative still behaves like a competitive firm.</p>
+    <div style="margin:10px 0">
+      <span class="eq-block">P<sub>t</sub> = $20 × 1.25 = <strong>$25</strong></span>
+      <span class="eq-block">Q<sup>S</sup> = −20 + 4P &nbsp;|&nbsp; P = 5 + Q/4</span>
+      <span class="eq-block">Q<sup>D</sup> = 300 − 4P &nbsp;|&nbsp; P = 75 − Q/4</span>
+    </div>
+  </div>
+
+  <div class="act-layout">
+    <div class="act-graph-col">
+      <div class="graph-container" style="margin:0">
+        <svg id="svg-3" viewBox="0 0 560 360" width="100%"></svg>
+        <div class="legend" id="leg-3"></div>
+      </div>
+    </div>
+    <div class="act-q-col">
+      <p style="font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:14px">Calculate the tariff equilibrium:</p>
+      <div class="q-panel" id="qpanel-3">
+
+        <div class="q-block" id="qb-3a">
+          <div class="q-label">Step 1 of 4 — New Quantities</div>
+          <div class="q-text">At P<sub>t</sub> = $25, find new Q<sup>S</sup> and Q<sup>D</sup>.</div>
+          <div class="input-row">
+            <span style="font-size:14px;color:var(--ink-dim)">Q<sup>S</sup> =</span>
+            <input class="ans-input" id="in-3a-s" type="number" placeholder="?">
+            <span style="font-size:14px;color:var(--ink-dim)">, &nbsp;Q<sup>D</sup> =</span>
+            <input class="ans-input" id="in-3a-d" type="number" placeholder="?">
+            <button class="check-btn" onclick="check3a()">Check</button>
+          </div>
+          <div class="fb hidden" id="fb-3a"></div>
+        </div>
+
+        <div class="hidden" id="qb-3b">
+          <div class="q-block">
+            <div class="q-label">Step 2 of 4 — Imports under Tariff</div>
+            <div class="q-text">How many bags are imported now?</div>
+            <div class="input-row">
+              <span style="font-size:14px;color:var(--ink-dim)">M<sub>2</sub> =</span>
+              <input class="ans-input" id="in-3b" type="number" placeholder="?">
+              <button class="check-btn" onclick="check3b()">Check</button>
+            </div>
+            <div class="fb hidden" id="fb-3b"></div>
+          </div>
+        </div>
+
+        <div class="hidden" id="qb-3c">
+          <div class="q-block">
+            <div class="q-label">Step 3 of 4 — CS, PS, Tariff Revenue</div>
+            <div class="q-text">Calculate CS, PS, and tariff revenue at P<sub>t</sub> = $25.
+              <br><span style="font-size:13px;color:var(--ink-dim);font-style:italic">Supply intercept P=5, demand intercept P=75.</span>
+            </div>
+            <div class="input-row" style="gap:8px">
+              <span style="font-size:13px;color:var(--ink-dim)">CS=$</span>
+              <input class="ans-input" id="in-3c-cs" type="number" placeholder="?">
+              <span style="font-size:13px;color:var(--ink-dim)">PS=$</span>
+              <input class="ans-input" id="in-3c-ps" type="number" placeholder="?">
+              <span style="font-size:13px;color:var(--ink-dim)">TR=$</span>
+              <input class="ans-input" id="in-3c-tr" type="number" placeholder="?">
+              <button class="check-btn" onclick="check3c()">Check</button>
+            </div>
+            <div class="fb hidden" id="fb-3c"></div>
+          </div>
+        </div>
+
+        <div class="hidden" id="qb-3d">
+          <div class="q-block">
+            <div class="q-label">Step 4 of 4 — Key Comparison</div>
+            <div class="q-text">Under the tariff, the monopolist charges P<sub>t</sub> = $25. A competitive industry facing the same tariff would also charge $25. Are these outcomes the <em>same or different</em>?</div>
+            <div class="input-row" style="gap:12px">
+              <button class="check-btn" id="btn-3d-s" onclick="check3d('same')" style="background:var(--green-pale);color:var(--green-light);border-color:var(--green)">Same</button>
+              <button class="check-btn" id="btn-3d-d" onclick="check3d('diff')" style="background:var(--blue-pale);color:var(--blue-light);border-color:var(--blue-light)">Different</button>
+            </div>
+            <div class="fb hidden" id="fb-3d"></div>
+          </div>
+        </div>
+
+        <div class="hidden" id="summary-3" style="margin-top:12px">
+          <table class="wtable">
+            <thead><tr><th>Component</th><th>Free Trade</th><th>Tariff (t=25%)</th><th>Change</th></tr></thead>
+            <tbody>
+              <tr><td>Price</td><td>$20</td><td>$25</td><td class="neg">+$5</td></tr>
+              <tr><td>Q<sup>S</sup></td><td>60</td><td>80</td><td class="pos">+20</td></tr>
+              <tr><td>Q<sup>D</sup></td><td>220</td><td>200</td><td class="neg">−20</td></tr>
+              <tr><td>Imports</td><td>160</td><td>120</td><td class="neg">−40</td></tr>
+              <tr><td>CS</td><td>$6,050</td><td>$5,000</td><td class="neg">−$1,050</td></tr>
+              <tr><td>PS</td><td>$450</td><td>$800</td><td class="pos">+$350</td></tr>
+              <tr><td>Tariff Revenue</td><td>$0</td><td>$600</td><td class="pos">+$600</td></tr>
+              <tr class="total-row"><td><strong>Total Home Welfare</strong></td><td><strong>$6,500</strong></td><td><strong>$6,400</strong></td><td class="neg"><strong>−$100</strong></td></tr>
+            </tbody>
+          </table>
+          <div class="insight gold" style="margin-top:10px">Under a tariff, the cooperative still competes against imports at every quantity — it cannot charge above P<sup>W</sup>+t. So tariff analysis with a monopolist gives the <strong>same result as perfect competition</strong>. The DWL = $100. This benchmark matters — the quota will be worse.</div>
+        </div>
+
+      </div>
+      <button class="continue-btn hidden" id="btn-3" onclick="goTo(4)" style="margin-top:20px">Continue to Quota — The Key Difference →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- ACT 4 — QUOTA -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="card hidden" id="act4">
+  <div class="card-header">
+    <div class="act-badge red">ACT 4</div>
+    <div class="card-title">Equivalent Quota — The Monopoly Awakens
+      <small>Same import volume M₂=120 — but now the cooperative regains market power</small>
+    </div>
+  </div>
+
+  <div class="narrative">
+    <div class="n-tag">⚠ The Critical Difference</div>
+    <h3>Under a Quota, Imports Run Out</h3>
+    <p>Under the tariff, imports are always available at $25 — keeping the cooperative in check. Under a quota of 120 bags, once those 120 bags are sold, <strong>no more imports can enter</strong>. The cooperative is now the <em>only remaining seller</em>. Its market power returns. It faces the <em>residual demand</em> D − M₂ and can optimize like a monopolist again.</p>
+  </div>
+
+  <div class="setup-box">
+    <h3>What We Know</h3>
+    <p>The government sets a quota M₂ = 120 bags — the same import volume as under the tariff. Total demand is still Q<sup>D</sup> = 300 − 4P. Once the 120 imported bags are sold, the cooperative is the only seller left.</p>
+    <div style="margin-top:10px">
+      <span class="eq-block">Q<sup>D</sup> = 300 − 4P &nbsp;|&nbsp; P = 75 − Q/4</span>
+      <span class="eq-block">M₂ = 120 bags (quota)</span>
+      <span class="eq-block">MC = $15/bag</span>
+    </div>
+  </div>
+
+  <!-- PRE-QUESTION 1: Residual demand in Q form -->
+  <div style="margin-top:20px">
+    <p style="font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:14px">First, derive the residual demand the cooperative faces:</p>
+    <div class="q-panel" id="qpanel-pre4">
+
+      <div class="q-block" id="qb-4pre-a">
+        <div class="q-label">Pre-Step 1 of 2 — Residual Demand (Q form)</div>
+        <div class="q-text">If total demand is Q<sup>D</sup> = 300 − 4P and 120 bags are already filled by imports, how many bags must the cooperative supply at any price P?
+        </div>
+        <div class="input-row">
+          <span style="font-size:14px;color:var(--ink-dim)">Q<sup>S</sup><sub>coop</sub> =</span>
+          <input class="ans-input" id="in-4pre-a" type="number" placeholder="?" style="width:80px">
+          <span style="font-size:14px;color:var(--ink-dim)">− 4P</span>
+          <button class="check-btn" onclick="check4preA()">Check</button>
+        </div>
+        <div class="fb hidden" id="fb-4pre-a"></div>
+      </div>
+
+      <div class="hidden" id="qb-4pre-b">
+        <div class="q-block">
+          <div class="q-label">Pre-Step 2 of 2 — Inverse Residual Demand & MR</div>
+          <div class="q-text">Rewrite Q<sup>S</sup><sub>coop</sub> = 180 − 4P as inverse demand. What is the P-intercept?
+            <br><span style="font-size:13px;color:var(--ink-dim);font-style:italic">Solve for P: 4P = 180 − Q → P = ? − Q/4. Then MR. <strong>Hint:</strong> for P = a − bQ, MR = a − 2bQ.</span>
+          </div>
+          <div class="input-row" style="gap:8px; flex-wrap:wrap;">
+            <span style="font-size:14px;color:var(--ink-dim)">P =</span>
+            <input class="ans-input" id="in-4pre-b-intercept" type="number" placeholder="?" style="width:80px">
+            <span style="font-size:14px;color:var(--ink-dim)">− Q/4 &nbsp;&nbsp; MR =</span>
+            <input class="ans-input" id="in-4pre-b-mr" type="number" placeholder="?" style="width:80px">
+            <span style="font-size:14px;color:var(--ink-dim)">− Q/2</span>
+            <button class="check-btn" onclick="check4preB()">Check</button>
+          </div>
+          <div class="fb hidden" id="fb-4pre-b"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- REST OF ACT 4 — hidden until pre-questions solved -->
+  <div class="hidden" id="act4-main">
+
+    <div style="margin-top:28px; border-top:1px solid var(--border); padding-top:20px">
+      <div class="setup-box">
+        <h3>Residual Demand Confirmed</h3>
+        <p>With quota M₂ = 120 bags already imported, the cooperative faces:</p>
+        <div style="margin:10px 0">
+          <span class="eq-block">Q<sup>S</sup><sub>coop</sub> = 180 − 4P &nbsp;|&nbsp; P = 45 − Q/4</span>
+          <span class="eq-block">Residual MR: MR = 45 − Q/2</span>
+        </div>
+        <p style="margin-top:8px; font-size:13px; color:var(--ink-dimmer); font-style:italic">The P-intercept shifts down from 75 to 45: total demand intercept minus quota/slope = 75 − 120/4 = 45.</p>
+      </div>
+
+      <div class="act-layout">
+        <div class="act-graph-col">
+          <div class="graph-container" style="margin:0">
+            <svg id="svg-4" viewBox="0 0 560 360" width="100%"></svg>
+            <div class="legend" id="leg-4"></div>
+          </div>
+        </div>
+        <div class="act-q-col">
+          <p style="font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:14px">Now find the monopoly equilibrium under the quota:</p>
+          <div class="q-panel" id="qpanel-4">
+
+            <div class="q-block" id="qb-4a">
+              <div class="q-label">Step 1 of 4 — Cooperative's Output</div>
+              <div class="q-text">The cooperative maximizes profit by setting <em>residual MR = MC</em>. Solve for Q<sup>S</sup><sub>coop</sub>.</div>
+              <div class="input-row">
+                <span style="font-size:14px;color:var(--ink-dim)">Q<sup>S</sup><sub>coop</sub> =</span>
+                <input class="ans-input" id="in-4a" type="number" placeholder="?">
+                <button class="check-btn" onclick="check4a()">Check</button>
+              </div>
+              <div class="fb hidden" id="fb-4a"></div>
+            </div>
+
+            <div class="hidden" id="qb-4b">
+              <div class="q-block">
+                <div class="q-label">Step 2 of 4 — Quota Price P₃</div>
+                <div class="q-text">Find the price the cooperative charges. Use the <em>original demand curve</em> at total quantity Q<sup>S</sup><sub>coop</sub> + M₂.
+                  <br><span style="font-size:13px;color:var(--ink-dim);font-style:italic">Total Q<sup>D</sup> = Q<sup>S</sup><sub>coop</sub> + 120. Then P = 75 − Q<sup>D</sup>/4.</span>
+                </div>
+                <div class="input-row">
+                  <span style="font-size:14px;color:var(--ink-dim)">P₃ = $</span>
+                  <input class="ans-input" id="in-4b" type="number" placeholder="?">
+                  <button class="check-btn" onclick="check4b()">Check</button>
+                </div>
+                <div class="fb hidden" id="fb-4b"></div>
+              </div>
+            </div>
+
+            <div class="hidden" id="qb-4c">
+              <div class="q-block">
+                <div class="q-label">Step 3 of 4 — Compare Prices</div>
+                <div class="q-text">By how much does the quota price exceed the tariff price P<sub>t</sub> = $25?</div>
+                <div class="input-row">
+                  <span style="font-size:14px;color:var(--ink-dim)">P₃ − P<sub>t</sub> = $</span>
+                  <input class="ans-input" id="in-4c" type="number" placeholder="?">
+                  <button class="check-btn" onclick="check4c()">Check</button>
+                </div>
+                <div class="fb hidden" id="fb-4c"></div>
+              </div>
+            </div>
+
+            <div class="hidden" id="qb-4d">
+              <div class="q-block">
+                <div class="q-label">Step 4 of 4 — CS and PS under Quota</div>
+                <div class="q-text">Calculate CS and PS at P₃ = $30.
+                  <br><span style="font-size:13px;color:var(--ink-dim);font-style:italic">All 180 bags sell at P₃ = $30. CS = ½×(75−30)×180 &nbsp;|&nbsp; PS = ½×(30−5)×60</span>
+                </div>
+                <div class="input-row">
+                  <span style="font-size:13px;color:var(--ink-dim)">CS=$</span>
+                  <input class="ans-input" id="in-4d-cs" type="number" placeholder="?">
+                  <span style="font-size:13px;color:var(--ink-dim)">PS=$</span>
+                  <input class="ans-input" id="in-4d-ps" type="number" placeholder="?">
+                  <button class="check-btn" onclick="check4d()">Check</button>
+                </div>
+                <div class="fb hidden" id="fb-4d"></div>
+              </div>
+            </div>
+
+            <div class="hidden" id="summary-4" style="margin-top:12px">
+              <table class="wtable">
+                <thead><tr><th>Component</th><th>Free Trade</th><th>Tariff</th><th>Quota (M=120)</th></tr></thead>
+                <tbody>
+                  <tr><td>Price</td><td>$20</td><td>$25</td><td class="neg hi">$30 ← higher!</td></tr>
+                  <tr><td>Q<sup>S</sup></td><td>60</td><td>80</td><td>60</td></tr>
+                  <tr><td>Q<sup>D</sup></td><td>220</td><td>200</td><td>180</td></tr>
+                  <tr><td>Imports</td><td>160</td><td>120</td><td>120 (fixed)</td></tr>
+                  <tr><td>CS</td><td>$6,050</td><td>$5,000</td><td class="neg">$4,050</td></tr>
+                  <tr><td>PS</td><td>$450</td><td>$800</td><td class="pos">$750</td></tr>
+                  <tr><td>Quota Rent</td><td>—</td><td>$600</td><td>$1,200</td></tr>
+                  <tr class="total-row"><td><strong>Total Home Welfare</strong></td><td><strong>$6,500</strong></td><td><strong>$6,400</strong></td><td class="neg"><strong>$6,000 ← worse!</strong></td></tr>
+                </tbody>
+              </table>
+              <div class="insight red" style="margin-top:10px">
+                <strong>Key Result:</strong> The quota causes $400 more welfare loss than the tariff with identical import volume. The cooperative's restored market power lets it charge $30 instead of $25 — the quota <em>shelters the monopolist</em>.
+              </div>
+            </div>
+
+          </div>
+          <button class="continue-btn hidden" id="btn-4" onclick="goTo(5)" style="margin-top:20px">See the Verdict →</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /act4-main -->
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- ACT 5 — VERDICT -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="card hidden" id="act5">
+  <div class="card-header">
+    <div class="act-badge" style="background:var(--blue-pale);color:var(--blue-light);border-color:var(--blue-light)">ACT 5</div>
+    <div class="card-title">The Verdict: Why Tariffs Beat Quotas with a Monopolist
+      <small>The WTO's push for tariffication explained</small>
+    </div>
+  </div>
+
+  <table class="wtable">
+    <thead>
+      <tr>
+        <th>Regime</th><th>Price</th><th>Imports</th><th>CS</th><th>PS</th><th>Govt Rev</th><th>Home TW</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>No-Trade (Monopoly)</td><td class="hi">$45</td><td>0</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr><td>Free Trade</td><td>$20</td><td>160</td><td>$6,050</td><td>$450</td><td>$0</td><td class="pos hi">$6,500</td></tr>
+      <tr><td>Tariff (t=25%)</td><td>$25</td><td>120</td><td>$5,000</td><td>$800</td><td>$600</td><td>$6,400</td></tr>
+      <tr style="background:var(--red-pale)"><td><strong>Quota (M=120)</strong></td><td class="neg hi">$30</td><td>120</td><td class="neg">$4,050</td><td>$750</td><td>$1,200</td><td class="neg hi">$5,600*</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:12px;color:var(--ink-dimmer);margin-top:6px;font-style:italic">* Welfare = CS + PS + Quota Rent = $4,050 + $750 + $1,200 = $6,000 when govt captures rent. Shown as $5,600 if foreign exporters get the quota rent (like a VER).</p>
+
+  <div style="margin-top:20px">
+    <!-- Conceptual MC question -->
+    <div class="q-block" id="qb-5a">
+      <div class="q-label">Conceptual Check</div>
+      <div class="q-text">Why does the quota allow the cooperative to charge a <em>higher price</em> than the tariff, even though both restrict imports to the same 120 bags?</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px" id="mc-5a">
+        <button class="check-btn" onclick="check5a('A')" style="text-align:left;padding:10px 16px;background:var(--surface);color:var(--ink-dim);border:1px solid var(--border);border-radius:3px;font-size:13px;cursor:pointer">A) The quota raises tariff revenue, giving the government money to subsidize consumers</button>
+        <button class="check-btn" onclick="check5a('B')" style="text-align:left;padding:10px 16px;background:var(--surface);color:var(--ink-dim);border:1px solid var(--border);border-radius:3px;font-size:13px;cursor:pointer">B) Under the tariff, imports are still available at $25 for any quantity — the cooperative can never charge more. Under the quota, once 120 bags are sold, no more imports can enter, so the cooperative faces the residual demand and can optimize like a monopolist</button>
+        <button class="check-btn" onclick="check5a('C')" style="text-align:left;padding:10px 16px;background:var(--surface);color:var(--ink-dim);border:1px solid var(--border);border-radius:3px;font-size:13px;cursor:pointer">C) The quota reduces domestic supply more than the tariff does</button>
+        <button class="check-btn" onclick="check5a('D')" style="text-align:left;padding:10px 16px;background:var(--surface);color:var(--ink-dim);border:1px solid var(--border);border-radius:3px;font-size:13px;cursor:pointer">D) Quotas always lead to higher prices than tariffs, regardless of market structure</button>
+      </div>
+      <div class="fb hidden" id="fb-5a"></div>
+    </div>
+  </div>
+
+  <div class="hidden" id="final-verdict">
+    <div class="summary-banner" style="margin-top:24px">
+      <h3>🎓 Key Takeaways</h3>
+      <p>
+        <strong style="color:var(--green-light)">1. Free trade eliminates monopoly power:</strong> The horizontal export supply at P<sup>W</sup> disciplines the monopolist — it must price at marginal cost.<br><br>
+        <strong style="color:var(--gold-light)">2. Tariff = Competitive outcome:</strong> Even with a monopolist, a tariff produces the same welfare result as under perfect competition. The cooperative still faces import competition at every quantity.<br><br>
+        <strong style="color:var(--red-light)">3. Quota ≠ Tariff with a monopolist:</strong> The quota shelters the cooperative — once imports run out, it regains market power and charges $30 instead of $25. Same 120 bags imported, but $400 more welfare lost.<br><br>
+        <strong style="color:var(--blue-light)">4. Why the WTO pushes tariffication:</strong> Replacing quotas with equivalent tariffs eliminates this monopoly shelter effect. This is one major reason the WTO has encouraged countries to convert quotas to tariffs — even holding import quantities fixed, the welfare gain from switching to a tariff can be large.
+      </p>
+    </div>
+
+    <div class="completion-box">
+      <h3>🎉 You've completed the Monopoly Trade Game!</h3>
+      <p>Enter your name and notify Professor Heo.</p>
+      <div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap">
+        <input type="text" id="student-name" class="name-input" placeholder="Your full name">
+        <button class="email-btn" onclick="sendCompletion()">✉ Email Professor</button>
+      </div>
+      <div id="email-fb"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrapper -->
+
+<script>
+// ══════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════
+const D = {
+  MC: 15, Pw: 20, Pt: 25,
+  // No-trade monopoly
+  QM: 120, PM: 45,
+  QC: 240, PC: 15,
+  // Free trade
+  Qs_ft: 60, Qd_ft: 220, M_ft: 160,
+  // Tariff
+  Qs_t: 80, Qd_t: 200, M_t: 120,
+  CS_t: 5000, PS_t: 800, TR_t: 600, TW_t: 6400,
+  // Quota
+  Qs_q: 60,   // cooperative output
+  Qd_q: 180,  // total consumption = 60+120
+  P3: 30,
+  M_q: 120,
+  CS_q: 4050, PS_q: 750,
+  QR_q: 1200, // quota rent = (30-20)*120
+  TW_q: 6000,
+};
+
+// ══════════════════════════════════════════════════
+// GRAPH UTILITIES
+// ══════════════════════════════════════════════════
+function makeBase(svgId) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return null;
+  svg.innerHTML = '';
+  const W=560, H=360, pad={top:30,right:50,bottom:50,left:60};
+  const gW=W-pad.left-pad.right, gH=H-pad.top-pad.bottom;
+  const Pmax=80, Qmax=280;
+  const xS = q => pad.left+(q/Qmax)*gW;
+  const yS = p => pad.top+gH-(p/Pmax)*gH;
+
+  function el(tag,attrs,par) {
+    const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+    for(const[k,v] of Object.entries(attrs)) e.setAttribute(k,v);
+    (par||svg).appendChild(e); return e;
+  }
+  function line(x1,y1,x2,y2,stroke,sw,dash) {
+    return el('line',{x1,y1,x2,y2,stroke:stroke||'#aaa','stroke-width':sw||1.5,...(dash?{'stroke-dasharray':dash}:{})});
+  }
+  function txt(x,y,content,opts={}) {
+    const t=el('text',{x,y,'font-size':opts.sz||11,fill:opts.fill||'#a08060',
+      'text-anchor':opts.anchor||'middle','font-family':"'Crimson Pro',Georgia,serif",
+      'font-weight':opts.bold?'700':'400'});
+    t.textContent=content; svg.appendChild(t); return t;
+  }
+  function poly(pts,fill,op) {
+    return el('polygon',{points:pts.map(p=>`${xS(p[0])},${yS(p[1])}`).join(' '),fill,opacity:op||0.5});
+  }
+  function anim(e) {
+    e.style.opacity='0'; e.style.transition='opacity 0.5s ease';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ e.style.opacity='1'; }));
+    return e;
+  }
+
+  // Axes
+  line(pad.left,pad.top,pad.left,pad.top+gH,'#4a3518',1.5);
+  line(pad.left,pad.top+gH,pad.left+gW,pad.top+gH,'#4a3518',1.5);
+
+  // Grid
+  [20,40,60,80].forEach(p=>{
+    line(pad.left,yS(p),pad.left+gW,yS(p),'#2a1a08',0.8,'4,3');
+    txt(pad.left-8,yS(p)+4,p,{anchor:'end',fill:'#a08050'});
+  });
+  [0,50,100,150,200,250].forEach(q=>{
+    line(xS(q),pad.top,xS(q),pad.top+gH,'#2a1a08',0.8,'4,3');
+    txt(xS(q),pad.top+gH+16,q,{fill:'#a08050'});
+  });
+
+  // Axis labels
+  txt(pad.left+gW/2, H-4,'Quantity (million bags)',{sz:12,fill:'#c8922a'});
+  const pl=txt(14,pad.top+gH/2,'Price ($/bag)',{sz:12,fill:'#c8922a'});
+  pl.setAttribute('transform',`rotate(-90,14,${pad.top+gH/2})`);
+
+  // Demand: P=75-Q/4  at Q=0→75, Q=280→5
+  line(xS(0),yS(75),xS(280),yS(5),'#4a70a0',2.5);
+  txt(xS(40),yS(68),'D',{sz:14,fill:'#4a70a0',bold:true,anchor:'start'});
+
+  // MC line (horizontal at 15)
+  line(xS(0),yS(D.MC),xS(280),yS(D.MC),'#4a70a0',1.8,'8,4');
+  txt(xS(270),yS(D.MC)-6,'MC',{sz:12,fill:'#4a70a0',bold:true,anchor:'end'});
+
+  return {el,line,txt,poly,anim,xS,yS,svg,pad,gW,gH};
+}
+
+// ── ACT 1 GRAPH (levels 0-3) ──
+let g1Level=0;
+function drawG1(lv) {
+  const c=makeBase('svg-1'); if(!c) return;
+  const {line,txt,poly,anim,xS,yS} = c;
+  const leg=document.getElementById('leg-1');
+  let html='<div class="legend-item"><div class="ls" style="background:#4a70a0"></div>Demand (D)</div>';
+  html+='<div class="legend-item"><div class="ls" style="background:#4a70a0;opacity:0.5"></div>MC = $15</div>';
+
+  // MR: P=75-Q/2  at Q=0→75, Q=150→0
+  line(xS(0),yS(75),xS(150),yS(0),'#c04030',2);
+  txt(xS(125),yS(D.MC)-6,'MR',{sz:13,fill:'#c04030',bold:true,anchor:'start'});
+  html+='<div class="legend-item"><div class="ls" style="background:#c04030"></div>MR</div>';
+
+  if(lv>=1) {
+    // Monopoly: Q^M=120, P^M=45
+    anim(line(xS(0),yS(D.PM),xS(D.QM),yS(D.PM),'#c8922a',1.5,'5,3'));
+    anim(line(xS(D.QM),yS(D.PM),xS(D.QM),yS(0),'#c8922a',1.5,'5,3'));
+    const dot=c.el('circle',{cx:xS(D.QM),cy:yS(D.PM),r:5,fill:'#c8922a',stroke:'#0d0a06','stroke-width':1.5});
+    anim(dot);
+    anim(txt(xS(D.QM)+6,yS(D.PM)-8,`A (${D.QM}, $${D.PM})`,{sz:10,fill:'#c8922a',anchor:'start'}));
+    // MR=MC intersection
+    const dot2=c.el('circle',{cx:xS(D.QM),cy:yS(D.MC),r:4,fill:'#888',stroke:'#0d0a06','stroke-width':1.5});
+    anim(dot2);
+    anim(txt(xS(0)-8,yS(D.PM)+4,D.PM,{sz:11,anchor:'end',fill:'#c8922a'}));
+    anim(txt(xS(D.QM),yS(0)+16,D.QM,{sz:11,fill:'#c8922a'}));
+    html+='<div class="legend-item"><div class="ls sq" style="background:#c8922a;opacity:0.8"></div>Monopoly EQM: Q<sup>M</sup>=120, P<sup>M</sup>=$45</div>';
+  }
+  if(lv>=2) {
+    // PC: Q^C=240, P^C=15
+    const dotC=c.el('circle',{cx:xS(D.QC),cy:yS(D.PC),r:5,fill:'#4a8a3a',stroke:'#0d0a06','stroke-width':1.5});
+    anim(dotC);
+    anim(line(xS(0),yS(D.PC),xS(D.QC),yS(D.PC),'#4a8a3a',1.5,'5,3'));
+    anim(line(xS(D.QC),yS(D.PC),xS(D.QC),yS(0),'#4a8a3a',1.5,'5,3'));
+    anim(txt(xS(D.QC)+6,yS(D.PC)-8,`B (${D.QC}, $${D.PC})`,{sz:10,fill:'#4a8a3a',anchor:'start'}));
+    anim(txt(xS(0)-8,yS(D.PC)+4,D.PC,{sz:11,anchor:'end',fill:'#4a8a3a'}));
+    anim(txt(xS(D.QC),yS(0)+16,D.QC,{sz:11,fill:'#4a8a3a'}));
+    html+='<div class="legend-item"><div class="ls sq" style="background:#4a8a3a;opacity:0.8"></div>Competitive EQM: Q<sup>C</sup>=240, P<sup>C</sup>=$15</div>';
+  }
+  leg.innerHTML=html;
+}
+
+// ── ACT 2 GRAPH ──
+let g2Level=0;
+function drawG2(lv) {
+  const c=makeBase('svg-2'); if(!c) return;
+  const {line,txt,poly,anim,xS,yS} = c;
+  const leg=document.getElementById('leg-2');
+  let html='';
+
+  // MR (dimmed reference)
+  line(xS(0),yS(75),xS(150),yS(0),'#4a3520',1.5,'6,4');
+  txt(xS(125),yS(D.MC)-6,'MR',{sz:12,fill:'#4a3520',anchor:'start'});
+
+  // World price - always show
+  line(xS(0),yS(D.Pw),xS(D.Qd_ft)+20,yS(D.Pw),'#d4700a',2,'7,4');
+  txt(xS(D.Qd_ft)+24,yS(D.Pw)-5,`P\u1d42=$${D.Pw}`,{sz:11,fill:'#d4700a',bold:true,anchor:'start'});
+  txt(xS(0)-8,yS(D.Pw)+4,D.Pw,{sz:11,anchor:'end',fill:'#d4700a'});
+  html+='<div class="legend-item"><div class="ls" style="background:#d4700a"></div>World Price P<sup>W</sup>=$20 = MR* for monopolist</div>';
+  html+='<div class="legend-item"><div class="ls" style="background:#4a70a0"></div>Demand (D) / MC</div>';
+
+  if(lv>=1) {
+    anim(line(xS(D.Qs_ft),yS(D.Pw),xS(D.Qs_ft),yS(0),'#888',1,'3,3'));
+    anim(line(xS(D.Qd_ft),yS(D.Pw),xS(D.Qd_ft),yS(0),'#888',1,'3,3'));
+    anim(txt(xS(D.Qs_ft),yS(0)+16,D.Qs_ft,{sz:11,fill:'#a08060'}));
+    anim(txt(xS(D.Qd_ft),yS(0)+16,D.Qd_ft,{sz:11,fill:'#a08060'}));
+    const dotB=c.el('circle',{cx:xS(D.Qs_ft),cy:yS(D.Pw),r:5,fill:'#d4700a',stroke:'#0d0a06','stroke-width':1.5});
+    anim(dotB);
+  }
+  if(lv>=2) {
+    const y=yS(D.Pw)-16;
+    anim(line(xS(D.Qs_ft),y,xS(D.Qd_ft),y,'#d4700a',2));
+    anim(line(xS(D.Qs_ft),y-5,xS(D.Qs_ft),y+5,'#d4700a',1.5));
+    anim(line(xS(D.Qd_ft),y-5,xS(D.Qd_ft),y+5,'#d4700a',1.5));
+    anim(txt(xS((D.Qs_ft+D.Qd_ft)/2),y-8,`Imports M\u2081=${D.M_ft}`,{sz:11,fill:'#d4700a',bold:true}));
+    html+='<div class="legend-item"><div class="ls" style="background:#d4700a;opacity:0.6"></div>Imports M₁=160</div>';
+  }
+  leg.innerHTML=html;
+}
+
+// ── ACT 3 GRAPH (tariff, progressive) ──
+let g3Level=0;
+function drawG3(lv) {
+  const c=makeBase('svg-3'); if(!c) return;
+  const {line,txt,poly,anim,xS,yS} = c;
+  const leg=document.getElementById('leg-3');
+  let html='';
+
+  // World price dashed reference
+  line(xS(0),yS(D.Pw),xS(D.Qd_ft)+10,yS(D.Pw),'#d4700a',1.5,'6,4');
+  txt(xS(D.Qd_ft)+14,yS(D.Pw)-5,'Non-tariff price',{sz:10,fill:'#d4700a',anchor:'start'});
+  txt(xS(0)-8,yS(D.Pw)+4,D.Pw,{sz:11,anchor:'end',fill:'#d4700a'});
+  // Tariff price
+  line(xS(0),yS(D.Pt),xS(D.Qd_t)+20,yS(D.Pt),'#c8922a',2);
+  txt(xS(D.Qd_t)+24,yS(D.Pt)-5,'Tariffed price',{sz:10,fill:'#c8922a',bold:true,anchor:'start'});
+  txt(xS(0)-8,yS(D.Pt)+4,D.Pt,{sz:11,anchor:'end',fill:'#c8922a'});
+  html+='<div class="legend-item"><div class="ls" style="background:#c8922a"></div>P<sub>t</sub>=$25</div>';
+  html+='<div class="legend-item"><div class="ls" style="background:#d4700a;opacity:0.6"></div>P<sup>W</sup>=$20</div>';
+
+  if(lv>=1) {
+    // Old quantities dimmed
+    line(xS(D.Qs_ft),yS(D.Pw),xS(D.Qs_ft),yS(0),'#2a1a08',1,'3,3');
+    line(xS(D.Qd_ft),yS(D.Pw),xS(D.Qd_ft),yS(0),'#2a1a08',1,'3,3');
+    txt(xS(D.Qs_ft),yS(0)+16,D.Qs_ft,{sz:10,fill:'#3a2a10'});
+    txt(xS(D.Qd_ft),yS(0)+16,D.Qd_ft,{sz:10,fill:'#3a2a10'});
+    // New verticals
+    anim(line(xS(D.Qs_t),yS(D.Pt),xS(D.Qs_t),yS(0),'#888',1,'3,3'));
+    anim(line(xS(D.Qd_t),yS(D.Pt),xS(D.Qd_t),yS(0),'#888',1,'3,3'));
+    anim(txt(xS(D.Qs_t),yS(0)+16,D.Qs_t,{sz:11,fill:'#a08060'}));
+    anim(txt(xS(D.Qd_t),yS(0)+16,D.Qd_t,{sz:11,fill:'#a08060'}));
+  }
+  if(lv>=2) {
+    const y=yS(D.Pt)-16;
+    anim(line(xS(D.Qs_t),y,xS(D.Qd_t),y,'#c8922a',2));
+    anim(line(xS(D.Qs_t),y-5,xS(D.Qs_t),y+5,'#c8922a',1.5));
+    anim(line(xS(D.Qd_t),y-5,xS(D.Qd_t),y+5,'#c8922a',1.5));
+    anim(txt(xS((D.Qs_t+D.Qd_t)/2),y-7,`M\u2082=${D.M_t}`,{sz:11,fill:'#c8922a',bold:true}));
+  }
+  if(lv>=3) {
+    anim(poly([[0,D.Pt],[0,75],[D.Qd_t,D.Pt]],'#4a8a3a',0.18));
+    anim(poly([[0,5],[0,D.Pt],[D.Qs_t,D.Pt]],'#c8922a',0.25));
+    html+='<div class="legend-item"><div class="ls sq" style="background:#4a8a3a;opacity:0.6"></div>CS</div>';
+    html+='<div class="legend-item"><div class="ls sq" style="background:#c8922a;opacity:0.6"></div>PS</div>';
+  }
+  if(lv>=4) {
+    anim(poly([[D.Qs_t,D.Pw],[D.Qs_t,D.Pt],[D.Qd_t,D.Pt],[D.Qd_t,D.Pw]],'#2a5080',0.45));
+    anim(txt(xS((D.Qs_t+D.Qd_t)/2),yS((D.Pw+D.Pt)/2),'TR',{sz:12,fill:'#fff',bold:true}));
+    html+='<div class="legend-item"><div class="ls sq" style="background:#2a5080;opacity:0.7"></div>Tariff Revenue</div>';
+  }
+  if(lv>=5) {
+    anim(poly([[D.Qs_ft,D.Pw],[D.Qs_t,D.Pw],[D.Qs_t,D.Pt]],'#a03020',0.6));
+    anim(poly([[D.Qd_t,D.Pw],[D.Qd_t,D.Pt],[D.Qd_ft,D.Pw]],'#a03020',0.6));
+    html+='<div class="legend-item"><div class="ls sq" style="background:#a03020;opacity:0.7"></div>DWL triangles</div>';
+  }
+  leg.innerHTML=html;
+}
+
+// ── ACT 4 GRAPH (quota monopoly) ──
+let g4Level=0;
+function drawG4(lv) {
+  const c=makeBase('svg-4'); if(!c) return;
+  const {line,txt,poly,anim,xS,yS,el} = c;
+  const leg=document.getElementById('leg-4');
+  let html='';
+
+  // World price reference
+  line(xS(0),yS(D.Pw),xS(D.Qd_ft)+10,yS(D.Pw),'#d4700a',1.5,'6,4');
+  txt(xS(D.Qd_ft)+14,yS(D.Pw)-5,`P\u1d42=$${D.Pw}`,{sz:10,fill:'#d4700a',anchor:'start'});
+  txt(xS(0)-8,yS(D.Pw)+4,D.Pw,{sz:11,anchor:'end',fill:'#d4700a'});
+  // Tariff level reference (dashed)
+  line(xS(0),yS(D.Pt),xS(D.Qd_t)+10,yS(D.Pt),'#c8922a',1.2,'4,4');
+  txt(xS(D.Qd_t)+14,yS(D.Pt)-5,'P\u209c=$25',{sz:9,fill:'#c8922a',anchor:'start'});
+  txt(xS(0)-8,yS(D.Pt)+4,D.Pt,{sz:11,anchor:'end',fill:'#c8922a'});
+  html+='<div class="legend-item"><div class="ls" style="background:#d4700a;opacity:0.5"></div>P<sup>W</sup>=$20</div>';
+  html+='<div class="legend-item"><div class="ls" style="background:#c8922a;opacity:0.5"></div>P<sub>t</sub>=$25 (tariff reference)</div>';
+
+  // Residual demand: P = 45 - Q/4  at Q=0→45, Q=180→0
+  line(xS(0),yS(45),xS(180),yS(0),'#c04030',2,'6,3');
+  txt(xS(30),yS(40),'D−M₂',{sz:12,fill:'#c04030',bold:true,anchor:'start'});
+  // Residual MR: P = 45 - Q/2  at Q=0→45, Q=90→0
+  line(xS(0),yS(45),xS(90),yS(0),'#c04030',1.5,'3,3');
+  txt(xS(60),yS(12),'MR',{sz:11,fill:'#c04030',anchor:'start'});
+  html+='<div class="legend-item"><div class="ls" style="background:#c04030;opacity:0.7"></div>Residual demand D−M₂ and MR</div>';
+
+  if(lv>=1) {
+    // Cooperative output Q=60, MR=MC intersection
+    anim(line(xS(D.Qs_q),yS(D.MC),xS(D.Qs_q),yS(0),'#888',1,'3,3'));
+    anim(txt(xS(D.Qs_q),yS(0)+16,`${D.Qs_q}`,{sz:11,fill:'#a08060'}));
+    const dotE=el('circle',{cx:xS(D.Qs_q),cy:yS(D.MC),r:5,fill:'#c04030',stroke:'#0d0a06','stroke-width':1.5});
+    anim(dotE);
+    anim(txt(xS(D.Qs_q)+6,yS(D.MC)-8,'E (MR=MC)',{sz:10,fill:'#c04030',anchor:'start'}));
+  }
+  if(lv>=2) {
+    // Quota price P3=30: white dashed horizontal from P-axis to D-M2 curve at Q=60,
+    // then white dashed vertical from (60,30) down to x-axis
+    anim(line(xS(0),yS(D.P3),xS(D.Qs_q),yS(D.P3),'#fff',1.5,'5,3'));
+    anim(line(xS(D.Qs_q),yS(D.P3),xS(D.Qs_q),yS(0),'#fff',1.5,'5,3'));
+    anim(txt(xS(0)-8,yS(D.P3)+4,D.P3,{sz:11,anchor:'end',fill:'#ff6a30'}));
+    anim(txt(xS(D.Qs_q),yS(0)+16,`${D.Qs_q}`,{sz:11,fill:'#ff6a30'}));
+    // Label P3 on the right
+    anim(txt(xS(D.Qd_q)+24,yS(D.P3)-5,`P₃=$${D.P3} ← HIGHER`,{sz:11,fill:'#ff6a30',bold:true,anchor:'start'}));
+    // Dot at intersection of P3 and D-M2 curve (Q=60, P=30 is on residual demand)
+    const dotP3=el('circle',{cx:xS(D.Qs_q),cy:yS(D.P3),r:5,fill:'#ff6a30',stroke:'#141008','stroke-width':1.5});
+    anim(dotP3);
+    html+='<div class="legend-item"><div class="ls" style="background:#ff6a30"></div>Quota price P₃=$30</div>';
+  }
+  if(lv>=3) {
+    // CS and PS shading
+    anim(poly([[0,D.P3],[0,75],[D.Qd_q,D.P3]],'#4a8a3a',0.18));
+    anim(poly([[0,5],[0,D.P3],[D.Qs_q,D.P3]],'#c8922a',0.25));
+    html+='<div class="legend-item"><div class="ls sq" style="background:#4a8a3a;opacity:0.6"></div>CS (smaller than tariff)</div>';
+    html+='<div class="legend-item"><div class="ls sq" style="background:#c8922a;opacity:0.6"></div>PS (cooperative profit)</div>';
+  }
+  if(lv>=4) {
+    // Quota rent rectangle (30-20)*120 between Qs_q and Qd_q
+    anim(poly([[D.Qs_q,D.Pw],[D.Qs_q,D.P3],[D.Qd_q,D.P3],[D.Qd_q,D.Pw]],'#603880',0.45));
+    anim(txt(xS((D.Qs_q+D.Qd_q)/2),yS((D.Pw+D.P3)/2),'Quota Rent',{sz:11,fill:'#e0b0ff',bold:true}));
+    html+='<div class="legend-item"><div class="ls sq" style="background:#603880;opacity:0.8"></div>Quota Rent = $1,200</div>';
+  }
+  leg.innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════
+// QUESTION HELPERS — one-at-a-time system
+// ══════════════════════════════════════════════════
+function showFB(id,type,msg) {
+  const e=document.getElementById(id);
+  e.className='fb '+type; e.innerHTML=msg; e.classList.remove('hidden');
+}
+function markInputsOK(inputIds) {
+  (inputIds||[]).forEach(id=>{ const e=document.getElementById(id); if(e){e.classList.add('ok');e.readOnly=true;} });
+}
+
+// Collapse current step into a green summary row, then show next step
+function advanceStep(panelId, doneId, summaryHTML, nextId) {
+  const panel = document.getElementById(panelId);
+  const doneEl = document.getElementById(doneId);
+
+  // Replace current step block with collapsed summary
+  const done = document.createElement('div');
+  done.className = 'step-done';
+  done.innerHTML = `<span class="sd-check">✓</span><span class="sd-ans">${summaryHTML}</span>`;
+  doneEl.replaceWith(done);
+
+  // Show next step
+  if(nextId) {
+    const next = document.getElementById(nextId);
+    if(next) next.classList.remove('hidden');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ACT 1 CHECKS
+// ══════════════════════════════════════════════════
+let a1=[false,false,false], att1=[0,0,0];
+function checkDone1() {
+  if(a1.every(Boolean)) { document.getElementById('btn-1').disabled=false; drawG1(2); }
+}
+
+function check1a() {
+  const v=parseFloat(document.getElementById('in-1a').value); att1[0]++;
+  if(v===120){
+    markInputsOK(['in-1a']);
+    showFB('fb-1a','ok','✓ Q<sup>M</sup>=120. The monopolist restricts output far below the competitive level (240).');
+    a1[0]=true;
+    setTimeout(()=>{ advanceStep('qpanel-1','qb-1a','Step 1 — Monopoly Output &nbsp; Q<sup>M</sup> = 120','qb-1b'); checkDone1(); }, 800);
+  }
+  else if(att1[0]===1) showFB('fb-1a','hint','Hint: 75 − Q/2 = 15. Isolate Q.');
+  else showFB('fb-1a','bad','75 − Q/2 = 15 → Q/2 = 60 → Q<sup>M</sup> = 120.');
+}
+function check1b() {
+  const v=parseFloat(document.getElementById('in-1b').value); att1[1]++;
+  if(v===45){
+    markInputsOK(['in-1b']);
+    showFB('fb-1b','ok','✓ P<sup>M</sup>=$45. Far above MC=$15 — classic monopoly markup!');
+    a1[1]=true; drawG1(1);
+    setTimeout(()=>{ advanceStep('qpanel-1','qb-1b','Step 2 — Monopoly Price &nbsp; P<sup>M</sup> = $45','qb-1c'); checkDone1(); }, 800);
+  }
+  else if(att1[1]===1) showFB('fb-1b','hint','Hint: P = 75 − Q<sup>M</sup>/4 = 75 − 120/4.');
+  else showFB('fb-1b','bad','P = 75 − 120/4 = 75 − 30 = $45.');
+}
+function check1c() {
+  const p=parseFloat(document.getElementById('in-1c-p').value);
+  const q=parseFloat(document.getElementById('in-1c-q').value); att1[2]++;
+  if(p===15 && q===240){
+    markInputsOK(['in-1c-p','in-1c-q']);
+    showFB('fb-1c','ok','✓ P<sup>C</sup>=$15, Q<sup>C</sup>=240. The monopolist produces only half of competitive output and charges triple the MC!');
+    a1[2]=true;
+    setTimeout(()=>{ advanceStep('qpanel-1','qb-1c','Step 3 — Competitive EQM &nbsp; P<sup>C</sup>=$15, Q<sup>C</sup>=240',null); checkDone1(); }, 800);
+  }
+  else if(att1[2]===1) showFB('fb-1c','hint','Hint: P=MC=15. Then Q=300−4×15.');
+  else showFB('fb-1c','bad','P<sup>C</sup>=15, Q<sup>C</sup>=300−60=240.');
+}
+
+// ══════════════════════════════════════════════════
+// ACT 2 CHECKS
+// ══════════════════════════════════════════════════
+let a2=[false,false,false], att2=[0,0,0];
+function checkDone2() { if(a2.every(Boolean)) document.getElementById('btn-2').disabled=false; }
+
+function check2a() {
+  const s=parseFloat(document.getElementById('in-2a-s').value);
+  const d=parseFloat(document.getElementById('in-2a-d').value); att2[0]++;
+  if(s===60 && d===220){
+    markInputsOK(['in-2a-s','in-2a-d']);
+    showFB('fb-2a','ok','✓ Q<sup>S</sup>=60, Q<sup>D</sup>=220. The cooperative prices at P<sup>W</sup>=$20 — just like a competitive firm!');
+    a2[0]=true; drawG2(1);
+    setTimeout(()=>{ advanceStep('qpanel-2','qb-2a','Step 1 — Quantities &nbsp; Q<sup>S</sup>=60, Q<sup>D</sup>=220','qb-2b'); checkDone2(); }, 800);
+  }
+  else if(att2[0]===1) showFB('fb-2a','hint','Hint: Plug P<sup>W</sup>=20 into Q<sup>S</sup>=−20+4P and Q<sup>D</sup>=300−4P.');
+  else showFB('fb-2a','bad','Q<sup>S</sup>=−20+80=60. Q<sup>D</sup>=300−80=220.');
+}
+function check2b() {
+  const v=parseFloat(document.getElementById('in-2b').value); att2[1]++;
+  if(v===160){
+    markInputsOK(['in-2b']);
+    showFB('fb-2b','ok','✓ Imports=160. The cooperative only serves 60 of 220 demanded.');
+    a2[1]=true; drawG2(2);
+    setTimeout(()=>{ advanceStep('qpanel-2','qb-2b','Step 2 — Imports &nbsp; M₁ = 160','qb-2c'); checkDone2(); }, 800);
+  }
+  else if(att2[1]===1) showFB('fb-2b','hint','Hint: Imports = Q<sup>D</sup> − Q<sup>S</sup>.');
+  else showFB('fb-2b','bad','160 = 220 − 60.');
+}
+function check2c(ans) {
+  document.getElementById('btn-2c-t').disabled=true;
+  document.getElementById('btn-2c-f').disabled=true;
+  if(ans==='true'){
+    document.getElementById('btn-2c-t').style.background='var(--green)';
+    document.getElementById('btn-2c-t').style.color='#fff';
+    showFB('fb-2c','ok','✓ True! The monopolist cannot price above P<sup>W</sup> — its effective MR equals P<sup>W</sup>, just like a price-taker. Free trade eliminates monopoly power.');
+    a2[2]=true;
+    setTimeout(()=>{ advanceStep('qpanel-2','qb-2c','Step 3 — True/False &nbsp; <strong>True</strong> — same as competitive outcome',null); checkDone2(); }, 800);
+  } else {
+    document.getElementById('btn-2c-f').style.background='var(--red)';
+    document.getElementById('btn-2c-f').style.color='#fff';
+    showFB('fb-2c','bad','Actually True — free trade neutralizes market power.');
+    setTimeout(()=>{ document.getElementById('btn-2c-t').disabled=false; document.getElementById('btn-2c-f').disabled=false; },1500);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ACT 3 CHECKS
+// ══════════════════════════════════════════════════
+let a3=[false,false,false,false], att3=[0,0,0,0];
+function checkDone3() {
+  if(a3.every(Boolean)) {
+    document.getElementById('summary-3').classList.remove('hidden');
+    document.getElementById('btn-3').classList.remove('hidden');
+  }
+}
+function check3a() {
+  const s=parseFloat(document.getElementById('in-3a-s').value);
+  const d=parseFloat(document.getElementById('in-3a-d').value); att3[0]++;
+  if(s===80 && d===200){
+    markInputsOK(['in-3a-s','in-3a-d']);
+    showFB('fb-3a','ok','✓ Q<sup>S</sup>=80, Q<sup>D</sup>=200.');
+    a3[0]=true; drawG3(1);
+    setTimeout(()=>{ advanceStep('qpanel-3','qb-3a','Step 1 — Quantities &nbsp; Q<sup>S</sup>=80, Q<sup>D</sup>=200','qb-3b'); checkDone3(); }, 800);
+  }
+  else if(att3[0]===1) showFB('fb-3a','hint','Hint: Plug P<sub>t</sub>=25 into both equations.');
+  else showFB('fb-3a','bad','Q<sup>S</sup>=−20+100=80. Q<sup>D</sup>=300−100=200.');
+}
+function check3b() {
+  const v=parseFloat(document.getElementById('in-3b').value); att3[1]++;
+  if(v===120){
+    markInputsOK(['in-3b']);
+    showFB('fb-3b','ok','✓ M₂=120. Down from 160 — tariff reduced imports by 40. This becomes the equivalent quota in Act 4.');
+    a3[1]=true; drawG3(2);
+    setTimeout(()=>{ advanceStep('qpanel-3','qb-3b','Step 2 — Imports &nbsp; M₂ = 120','qb-3c'); checkDone3(); }, 800);
+  }
+  else if(att3[1]===1) showFB('fb-3b','hint','Hint: M = Q<sup>D</sup> − Q<sup>S</sup>.');
+  else showFB('fb-3b','bad','120 = 200 − 80.');
+}
+function check3c() {
+  const cs=parseFloat(document.getElementById('in-3c-cs').value);
+  const ps=parseFloat(document.getElementById('in-3c-ps').value);
+  const tr=parseFloat(document.getElementById('in-3c-tr').value); att3[2]++;
+  if(cs===5000 && ps===800 && tr===600){
+    markInputsOK(['in-3c-cs','in-3c-ps','in-3c-tr']);
+    showFB('fb-3c','ok','✓ CS=$5,000 PS=$800 TR=$600. TW=$6,400.');
+    a3[2]=true; drawG3(3); drawG3(4);
+    setTimeout(()=>{ advanceStep('qpanel-3','qb-3c','Step 3 — CS/PS/TR &nbsp; $5,000 / $800 / $600','qb-3d'); checkDone3(); }, 800);
+  }
+  else if(att3[2]===1) showFB('fb-3c','hint','Hint: CS=½×(75−25)×200. PS=½×(25−5)×80. TR=(25−20)×120.');
+  else {
+    let m='';
+    if(cs!==5000) m+='CS=½×50×200=5,000. ';
+    if(ps!==800) m+='PS=½×20×80=800. ';
+    if(tr!==600) m+='TR=5×120=600.';
+    showFB('fb-3c','bad',m);
+  }
+}
+function check3d(ans) {
+  document.getElementById('btn-3d-s').disabled=true;
+  document.getElementById('btn-3d-d').disabled=true;
+  if(ans==='same'){
+    document.getElementById('btn-3d-s').style.background='var(--green)';
+    document.getElementById('btn-3d-s').style.color='#fff';
+    showFB('fb-3d','ok','✓ Same! Imports still available at $25 — monopoly power stays suppressed. <strong>The quota will be completely different.</strong>');
+    a3[3]=true; drawG3(5);
+    setTimeout(()=>{ advanceStep('qpanel-3','qb-3d','Step 4 — Tariff vs. Competition &nbsp; <strong>Same</strong> outcome',null); checkDone3(); }, 800);
+  } else {
+    document.getElementById('btn-3d-d').style.background='var(--red)';
+    document.getElementById('btn-3d-d').style.color='#fff';
+    showFB('fb-3d','bad','Actually Same — imports are available at $25, so monopoly power stays suppressed.');
+    setTimeout(()=>{ document.getElementById('btn-3d-s').disabled=false; document.getElementById('btn-3d-d').disabled=false; },1500);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ACT 4 PRE-QUESTIONS (residual demand derivation)
+// ══════════════════════════════════════════════════
+let att4pre=[0,0];
+
+function check4preA() {
+  const v=parseFloat(document.getElementById('in-4pre-a').value); att4pre[0]++;
+  if(v===180){
+    markInputsOK(['in-4pre-a']);
+    showFB('fb-4pre-a','ok','✓ Q<sup>S</sup><sub>coop</sub> = 180 − 4P. The intercept drops from 300 to 180 once 120 imported bags are spoken for.');
+    setTimeout(()=>{ advanceStep('qpanel-pre4','qb-4pre-a','Pre-Step 1 — Residual Q form &nbsp; Q<sup>S</sup><sub>coop</sub> = 180 − 4P','qb-4pre-b'); }, 800);
+  } else if(att4pre[0]===1) {
+    showFB('fb-4pre-a','hint','Hint: Start with Q<sup>D</sup> = 300 − 4P and subtract 120. What is 300 − 120?');
+  } else {
+    showFB('fb-4pre-a','bad','Q<sup>S</sup><sub>coop</sub> = (300 − 4P) − 120 = 180 − 4P.');
+  }
+}
+
+function check4preB() {
+  const intercept=parseFloat(document.getElementById('in-4pre-b-intercept').value);
+  const mr=parseFloat(document.getElementById('in-4pre-b-mr').value); att4pre[1]++;
+  if(intercept===45 && mr===45){
+    markInputsOK(['in-4pre-b-intercept','in-4pre-b-mr']);
+    showFB('fb-4pre-b','ok','✓ P = 45 − Q/4 and MR = 45 − Q/2. Market power is back — the cooperative now faces downward-sloping demand!');
+    setTimeout(()=>{
+      advanceStep('qpanel-pre4','qb-4pre-b','Pre-Step 2 — Inverse demand &amp; MR &nbsp; P = 45 − Q/4 &nbsp;|&nbsp; MR = 45 − Q/2',null);
+      document.getElementById('act4-main').classList.remove('hidden');
+      drawG4(0);
+      document.getElementById('act4-main').scrollIntoView({behavior:'smooth',block:'start'});
+    }, 800);
+  } else if(att4pre[1]===1) {
+    showFB('fb-4pre-b','hint','Hint: 4P = 180 − Q → P = ? − Q/4. MR same intercept, double slope coefficient.');
+  } else {
+    let m='';
+    if(intercept!==45) m+='P = 45 − Q/4. Intercept = 45. ';
+    if(mr!==45) m+='MR = 45 − Q/2. Same intercept as demand.';
+    showFB('fb-4pre-b','bad',m);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ACT 4 CHECKS
+// ══════════════════════════════════════════════════
+let a4=[false,false,false,false], att4=[0,0,0,0];
+function checkDone4() {
+  if(a4.every(Boolean)) {
+    document.getElementById('summary-4').classList.remove('hidden');
+    document.getElementById('btn-4').classList.remove('hidden');
+  }
+}
+function check4a() {
+  const v=parseFloat(document.getElementById('in-4a').value); att4[0]++;
+  if(v===60){
+    markInputsOK(['in-4a']);
+    showFB('fb-4a','ok','✓ Q<sup>S</sup><sub>coop</sub>=60. Same output as free trade — but price will be much higher!');
+    a4[0]=true; drawG4(1);
+    setTimeout(()=>{ advanceStep('qpanel-4','qb-4a','Step 1 — Cooperative Output &nbsp; Q<sup>S</sup><sub>coop</sub> = 60','qb-4b'); checkDone4(); }, 800);
+  }
+  else if(att4[0]===1) showFB('fb-4a','hint','Hint: MR = 45 − Q/2 = MC = 15. Solve for Q.');
+  else showFB('fb-4a','bad','45 − Q/2 = 15 → Q = 60.');
+}
+function check4b() {
+  const v=parseFloat(document.getElementById('in-4b').value); att4[1]++;
+  if(v===30){
+    markInputsOK(['in-4b']);
+    showFB('fb-4b','ok','✓ P₃=$30. Already $5 above the tariff price of $25 — with the same 120 imports!');
+    a4[1]=true; drawG4(2);
+    setTimeout(()=>{ advanceStep('qpanel-4','qb-4b','Step 2 — Quota Price &nbsp; P₃ = $30','qb-4c'); checkDone4(); }, 800);
+  }
+  else if(att4[1]===1) showFB('fb-4b','hint','Hint: Q<sup>D</sup> total = 60+120=180. Then P = 75 − 180/4.');
+  else showFB('fb-4b','bad','Q<sup>D</sup>=180. P=75−45=$30.');
+}
+function check4c() {
+  const v=parseFloat(document.getElementById('in-4c').value); att4[2]++;
+  if(v===5){
+    markInputsOK(['in-4c']);
+    showFB('fb-4c','ok','✓ $5 higher. The quota shelter effect costs consumers an extra $5 per bag on all 180 bags.');
+    a4[2]=true;
+    setTimeout(()=>{ advanceStep('qpanel-4','qb-4c','Step 3 — Price Difference &nbsp; P₃ − P<sub>t</sub> = $5','qb-4d'); checkDone4(); }, 800);
+  }
+  else if(att4[2]===1) showFB('fb-4c','hint','Hint: P₃=$30, P<sub>t</sub>=$25.');
+  else showFB('fb-4c','bad','30 − 25 = $5.');
+}
+function check4d() {
+  const cs=parseFloat(document.getElementById('in-4d-cs').value);
+  const ps=parseFloat(document.getElementById('in-4d-ps').value); att4[3]++;
+  if(cs===4050 && ps===750){
+    markInputsOK(['in-4d-cs','in-4d-ps']);
+    showFB('fb-4d','ok','✓ CS=$4,050 PS=$750. CS is $950 lower than under the tariff!');
+    a4[3]=true; drawG4(3); drawG4(4);
+    setTimeout(()=>{ advanceStep('qpanel-4','qb-4d','Step 4 — CS/PS &nbsp; CS=$4,050 / PS=$750',null); checkDone4(); }, 800);
+  }
+  else if(att4[3]===1) showFB('fb-4d','hint','Hint: CS=½×45×180. PS=½×25×60.');
+  else {
+    let m='';
+    if(cs!==4050) m+='CS=½×(75−30)×180=4,050. ';
+    if(ps!==750) m+='PS=½×(30−5)×60=750.';
+    showFB('fb-4d','bad',m);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ACT 5 CHECK
+// ══════════════════════════════════════════════════
+function check5a(ans) {
+  const btns=document.querySelectorAll('#mc-5a button');
+  btns.forEach(b=>b.disabled=true);
+  if(ans==='B'){
+    btns[1].style.background='var(--green)'; btns[1].style.color='#fff';
+    showFB('fb-5a','ok','✓ Correct! A tariff is a price ceiling at P<sup>W</sup>+t — imports always available, monopoly always in check. A quota is a quantity ceiling — once exhausted, monopolist faces residual demand alone and restores MR=MC pricing.');
+    document.getElementById('final-verdict').classList.remove('hidden');
+    document.getElementById('prog-5').classList.add('active');
+  } else {
+    const idx={'A':0,'C':2,'D':3}[ans];
+    btns[idx].style.background='var(--red)'; btns[idx].style.color='#fff';
+    const msgs={
+      A:'Not quite — the key is whether imports remain available at a capped price, not about subsidies.',
+      C:'Not quite — both policies result in Q<sup>S</sup>=80 domestic supply under competition, but quota restores monopoly power.',
+      D:'False — in competitive markets tariff ≡ quota. The difference only arises with a monopolist.'
+    };
+    showFB('fb-5a','bad',msgs[ans]);
+    setTimeout(()=>btns.forEach(b=>b.disabled=false),1500);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════
+function goTo(n) {
+  const ids={2:'act2',3:'act3',4:'act4',5:'act5'};
+  const progs={2:'prog-2',3:'prog-3',4:'prog-4',5:'prog-5'};
+  document.getElementById(ids[n]).classList.remove('hidden');
+
+  for(let i=1;i<n;i++) {
+    const p=document.getElementById('prog-'+i);
+    if(p){p.classList.remove('active');p.classList.add('done');}
+  }
+  const cp=document.getElementById(progs[n]);
+  if(cp) cp.classList.add('active');
+
+  if(n===2){drawG2(0);}
+  if(n===3){drawG3(0);}
+
+  document.getElementById(ids[n]).scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// Completion email
+function sendCompletion() {
+  const name=document.getElementById('student-name').value.trim();
+  const fb=document.getElementById('email-fb');
+  if(!name){fb.textContent='Please enter your name first.';fb.style.color='var(--red-light)';return;}
+  const sub=encodeURIComponent('Monopoly Trade Game Completed');
+  const body=encodeURIComponent(`${name} has completed the Monopoly Trade Policy Game!\n\nCourse: ECON 326 — International Trade\nGame: Coffee Bean Monopoly — Tariff vs. Quota with Home Monopoly (CH8)`);
+  window.location.href=`mailto:jheo1@oberlin.edu?subject=${sub}&body=${body}`;
+  fb.textContent=`Opening email client for ${name}...`;
+  fb.style.color='var(--green-light)';
+}
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+window.addEventListener('load', () => { drawG1(0); });
+</script>
+</body>
+</html>
