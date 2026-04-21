@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Economica AFC — Dumping Game | ECON 326</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f0f4f2;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --border: #d4e0da;
+  --border-dark: #b0c8be;
+  --ink: #0f2620;
+  --ink-mid: #3a5a4e;
+  --ink-dim: #6a8a7e;
+  --ink-dimmer: #a0b8b0;
+  --teal: #0d7a5f;
+  --teal-light: #14a87f;
+  --teal-pale: #e0f4ee;
+  --teal-mid: #c0e8da;
+  --gold: #c08020;
+  --gold-light: #e8a030;
+  --gold-pale: #fdf4e0;
+  --red: #b83020;
+  --red-light: #d84030;
+  --red-pale: #fdeee8;
+  --blue: #1a5a8a;
+  --blue-pale: #e8f0f8;
+  --green: #1a7a40;
+  --green-pale: #e8f8ee;
+  --shadow-sm: 0 1px 4px rgba(15,38,32,0.08);
+  --shadow: 0 4px 20px rgba(15,38,32,0.10);
+  --shadow-lg: 0 8px 40px rgba(15,38,32,0.14);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* subtle grid texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(13,122,95,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13,122,95,0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 100px;
+}
+
+/* ── HEADER ── */
+header {
+  padding: 52px 0 40px;
+  border-bottom: 2px solid var(--teal);
+  margin-bottom: 40px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.header-left {}
+
+.course-tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 10px;
+}
+
+header h1 {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(28px, 4vw, 46px);
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1.15;
+}
+
+header h1 em {
+  font-style: italic;
+  color: var(--teal);
+}
+
+.header-badge {
+  background: var(--teal);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── PROGRESS ── */
+.progress-bar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 40px;
+  border: 1.5px solid var(--border-dark);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.progress-step {
+  flex: 1;
+  padding: 12px 8px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-dimmer);
+  background: var(--surface);
+  border-right: 1.5px solid var(--border);
+  transition: all 0.3s ease;
+}
+.progress-step:last-child { border-right: none; }
+.progress-step.active { background: var(--teal-pale); color: var(--teal); font-weight: 600; }
+.progress-step.done { background: var(--teal); color: #fff; }
+.progress-step .sn { display: block; font-size: 16px; margin-bottom: 2px; font-family: 'DM Serif Display', serif; }
+
+/* ── CARD ── */
+.card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 32px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow);
+  animation: fadeUp 0.4s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1.5px solid var(--border);
+}
+
+.act-badge {
+  background: var(--teal-pale);
+  color: var(--teal);
+  border: 1.5px solid var(--teal);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  white-space: nowrap;
+  margin-top: 4px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.act-badge.gold { background: var(--gold-pale); color: var(--gold); border-color: var(--gold); }
+.act-badge.red { background: var(--red-pale); color: var(--red); border-color: var(--red); }
+.act-badge.blue { background: var(--blue-pale); color: var(--blue); border-color: var(--blue); }
+
+.card-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.card-title small {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-dim);
+  margin-top: 3px;
+}
+
+/* ── NARRATIVE BOX ── */
+.narrative {
+  background: linear-gradient(135deg, var(--teal-pale), #f0faf6);
+  border: 1.5px solid var(--teal);
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.narrative.gold { background: linear-gradient(135deg, var(--gold-pale), #fffbf0); border-color: var(--gold-light); }
+.narrative.red { background: linear-gradient(135deg, var(--red-pale), #fff8f6); border-color: var(--red-light); }
+.narrative.blue { background: linear-gradient(135deg, var(--blue-pale), #f4f8ff); border-color: var(--blue); }
+
+.narrative .n-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+  display: block;
+}
+.narrative .n-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 6px;
+}
+.narrative.gold .n-tag { color: var(--gold); }
+.narrative.red .n-tag { color: var(--red); }
+.narrative.blue .n-tag { color: var(--blue); }
+
+.narrative h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.narrative p { font-size: 14px; color: var(--ink-mid); line-height: 1.8; }
+.narrative strong { color: var(--ink); }
+
+/* ── SETUP BOX ── */
+.setup-box {
+  background: var(--teal-pale);
+  border-left: 3px solid var(--teal);
+  padding: 14px 18px;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 20px;
+}
+.setup-box h3 {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 8px;
+}
+.setup-box p { font-size: 13px; color: var(--ink-mid); line-height: 1.8; }
+
+.eq-block {
+  font-family: 'DM Serif Display', serif;
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1.5px solid var(--border-dark);
+  padding: 6px 12px;
+  border-radius: 4px;
+  display: inline-block;
+  margin: 3px 3px;
+}
+
+/* ── WIDE LAYOUT ── */
+.act-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  margin-top: 20px;
+}
+.act-graph-col {
+  flex: 0 0 50%;
+  width: 50%;
+  position: sticky;
+  top: 16px;
+}
+.act-q-col { flex: 1; min-width: 0; }
+
+/* ── GRAPH ── */
+.graph-container {
+  background: #f8fbf9;
+  border: 1.5px solid var(--border-dark);
+  border-radius: 6px;
+  padding: 16px;
+  margin: 0;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--ink-dim);
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.ls { width: 14px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+.ls.sq { height: 12px; border-radius: 2px; }
+
+/* ── ONE-AT-A-TIME QUESTIONS ── */
+.q-panel { display: flex; flex-direction: column; gap: 0; }
+
+.step-done {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--green-pale);
+  border: 1.5px solid var(--green);
+  border-radius: 4px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--green);
+  animation: fadeUp 0.3s ease;
+}
+.step-done .sd-check { font-size: 14px; flex-shrink: 0; }
+.step-done .sd-ans { color: var(--ink); font-weight: 500; }
+
+.q-block {
+  border: 1.5px solid var(--border-dark);
+  border-radius: 6px;
+  padding: 18px 20px;
+  background: var(--surface);
+  animation: fadeUp 0.35s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.q-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 6px;
+}
+
+.q-text { font-size: 14px; color: var(--ink); margin-bottom: 12px; line-height: 1.7; }
+.q-text em { color: var(--teal); font-style: normal; font-weight: 600; }
+
+.input-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.ans-input {
+  border: 1.5px solid var(--border-dark);
+  border-radius: 4px;
+  padding: 7px 12px;
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  width: 100px;
+  color: var(--ink);
+  background: var(--bg);
+  transition: border-color 0.2s;
+}
+.ans-input:focus { outline: none; border-color: var(--teal); background: #fff; }
+.ans-input.ok { border-color: var(--green); background: var(--green-pale); }
+.ans-input.bad { border-color: var(--red); }
+
+.check-btn {
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.check-btn:hover { background: var(--teal-light); transform: translateY(-1px); }
+
+.mc-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  background: var(--bg);
+  color: var(--ink-mid);
+  border: 1.5px solid var(--border-dark);
+  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 6px;
+}
+.mc-btn:hover { background: var(--teal-pale); border-color: var(--teal); color: var(--ink); }
+
+.tf-btn {
+  padding: 9px 24px;
+  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid;
+  transition: all 0.2s;
+}
+
+.fb {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  padding: 10px 14px;
+  border-radius: 4px;
+}
+.fb.ok { background: var(--green-pale); color: var(--green); border-left: 3px solid var(--green); }
+.fb.hint { background: var(--gold-pale); color: var(--gold); border-left: 3px solid var(--gold-light); }
+.fb.bad { background: var(--red-pale); color: var(--red); border-left: 3px solid var(--red-light); }
+.ready-btn {
+  margin-top: 12px;
+  background: var(--teal-pale);
+  color: var(--teal);
+  border: 1.5px solid var(--teal);
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-block;
+  animation: fadeUp 0.3s ease;
+}
+.ready-btn:hover { background: var(--teal); color: #fff; }
+
+/* ── PROFIT CARD ── */
+.profit-display {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.profit-tile {
+  flex: 1;
+  min-width: 120px;
+  background: var(--bg);
+  border: 1.5px solid var(--border-dark);
+  border-radius: 6px;
+  padding: 14px 16px;
+  text-align: center;
+}
+.profit-tile .pt-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--ink-dim); margin-bottom: 4px; }
+.profit-tile .pt-val { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--ink); }
+.profit-tile.highlight { background: var(--teal-pale); border-color: var(--teal); }
+.profit-tile.highlight .pt-val { color: var(--teal); }
+.profit-tile.danger { background: var(--red-pale); border-color: var(--red-light); }
+.profit-tile.danger .pt-val { color: var(--red); }
+
+/* ── CONTINUE BTN ── */
+.continue-btn {
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  padding: 13px 32px;
+  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: block;
+  margin: 24px auto 0;
+  transition: all 0.2s;
+  box-shadow: var(--shadow);
+}
+.continue-btn:hover { background: var(--teal-light); transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.continue-btn:disabled { background: var(--border-dark); color: var(--ink-dimmer); cursor: default; transform: none; box-shadow: none; }
+
+/* ── INSIGHT / SUMMARY ── */
+.insight {
+  border-radius: 4px;
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.8;
+  margin-top: 12px;
+}
+.insight.teal { background: var(--teal-pale); border-left: 3px solid var(--teal); color: var(--ink-mid); }
+.insight.red { background: var(--red-pale); border-left: 3px solid var(--red-light); color: var(--red); }
+.insight.gold { background: var(--gold-pale); border-left: 3px solid var(--gold-light); color: var(--gold); }
+
+.wtable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 16px;
+}
+.wtable th {
+  background: var(--teal);
+  color: #fff;
+  padding: 9px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+}
+.wtable td { padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--ink-mid); }
+.wtable tr:nth-child(even) td { background: var(--teal-pale); }
+.wtable .total-row td { font-weight: 600; color: var(--ink); background: var(--teal-mid) !important; }
+.pos { color: var(--green) !important; font-weight: 600; }
+.neg { color: var(--red) !important; font-weight: 600; }
+.hi { color: var(--teal) !important; font-weight: 600; }
+
+/* ── VERDICT / COMPLETION ── */
+.summary-banner {
+  background: linear-gradient(135deg, var(--teal-pale), #e8faf4);
+  border: 1.5px solid var(--teal);
+  border-radius: 6px;
+  padding: 24px;
+  margin-top: 20px;
+}
+.summary-banner h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--teal);
+  margin-bottom: 12px;
+}
+.summary-banner p { font-size: 13px; color: var(--ink-mid); line-height: 1.9; }
+
+.completion-box {
+  background: var(--surface);
+  border: 1.5px solid var(--teal);
+  border-radius: 6px;
+  padding: 24px;
+  text-align: center;
+  margin-top: 24px;
+  box-shadow: var(--shadow);
+}
+.completion-box h3 { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--teal); margin-bottom: 6px; }
+.completion-box p { font-size: 13px; color: var(--ink-dim); margin-bottom: 18px; }
+.name-input {
+  border: 1.5px solid var(--border-dark);
+  border-radius: 4px;
+  padding: 9px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  width: 200px;
+  color: var(--ink);
+  background: var(--bg);
+  margin-right: 8px;
+}
+.email-btn {
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.email-btn:hover { background: var(--teal-light); }
+#email-fb { margin-top: 10px; font-size: 13px; color: var(--green); font-style: italic; min-height: 20px; }
+
+@media (max-width: 700px) {
+  .act-layout { flex-direction: column; }
+  .act-graph-col { position: static; width: 100%; }
+  header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<header>
+  <div class="header-left">
+    <div class="course-tag">ECON 326 · International Trade · Imperfect Competition</div>
+    <h1>The Economica Decision<br><em>Dumping & Antidumping Policy</em></h1>
+  </div>
+  <div class="header-badge">🧬 Algae Fuel Cell Simulation</div>
+</header>
+
+<div class="progress-bar">
+  <div class="progress-step active" id="prog-1"><span class="sn">①</span>Oberland Market</div>
+  <div class="progress-step" id="prog-2"><span class="sn">②</span>Export Decision</div>
+  <div class="progress-step" id="prog-3"><span class="sn">③</span>Dumping Check</div>
+  <div class="progress-step" id="prog-4"><span class="sn">④</span>The Duty</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- ACT 1 — OBERLAND MONOPOLY MARKET -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card" id="act1">
+  <div class="card-header">
+    <div class="act-badge">ACT 1</div>
+    <div class="card-title">The Breakthrough
+      <small>You are the CEO of Economica — Oberland's only algae fuel cell producer</small>
+    </div>
+  </div>
+
+  <div class="narrative">
+    <span class="n-icon">🧬</span>
+    <div class="n-tag">Your Story Begins</div>
+    <h3>A Scientist Walks Into Your Office</h3>
+    <p>You are the CEO of <strong>Economica</strong>, a biotech startup based in the small nation of <strong>Oberland</strong>. Your lead researcher has just achieved a major scientific breakthrough — a commercially viable <strong>Algae Fuel Cell (AFC)</strong> that converts algae biomass directly into clean electricity.</p>
+    <p style="margin-top:8px">The R&D required an enormous fixed investment. In fact, the upfront cost is so high that <strong>only Economica can afford to produce AFCs in Oberland</strong> — you are the sole domestic producer. You face a downward-sloping demand curve and must decide how many units to produce.</p>
+  </div>
+
+  <div class="setup-box">
+    <h3>Oberland Market Data</h3>
+    <p style="margin-bottom:8px">Your economics team estimates the following for the Oberland AFC market:</p>
+    <div>
+      <span class="eq-block">Fixed Cost = $800</span>
+      <span class="eq-block">MC = $10/unit (constant)</span>
+      <span class="eq-block">Local Demand: P* = 50 − Q/2</span>
+      <span class="eq-block">MR* = 50 − Q</span>
+    </div>
+  </div>
+
+  <div class="act-layout">
+    <div class="act-graph-col">
+      <div class="graph-container">
+        <svg id="svg-1" viewBox="0 0 500 340" width="100%"></svg>
+        <div class="legend" id="leg-1"></div>
+      </div>
+    </div>
+    <div class="act-q-col">
+      <p style="font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin-bottom:14px">Find Economica's optimal production in Oberland:</p>
+      <div class="q-panel" id="qpanel-1">
+
+        <div class="q-block" id="qb-1a">
+          <div class="q-label">Step 1 of 3 — Profit-Maximizing Output</div>
+          <div class="q-text">As a monopolist, Economica sets <em>MR* = MC*</em>. Solve for Q*.</div>
+          <div class="input-row">
+            <span style="font-size:13px;color:var(--ink-dim)">Q* =</span>
+            <input class="ans-input" id="in-1a" type="number" placeholder="?">
+            <button class="check-btn" onclick="check1a()">Check</button>
+          </div>
+          <div class="fb hidden" id="fb-1a"></div>
+        </div>
+
+        <div class="hidden" id="qb-1b">
+          <div class="q-block">
+            <div class="q-label">Step 2 of 3 — Monopoly Price</div>
+            <div class="q-text">Substitute Q* into the <em>local demand curve</em> to find P*.</div>
+            <div class="input-row">
+              <span style="font-size:13px;color:var(--ink-dim)">P* = $</span>
+              <input class="ans-input" id="in-1b" type="number" placeholder="?">
+              <button class="check-btn" onclick="check1b()">Check</button>
+            </div>
+            <div class="fb hidden" id="fb-1b"></div>
+          </div>
+        </div>
+
+        <div class="hidden" id="qb-1c">
+          <div class="q-block">
+            <div class="q-label">Step 3 of 3 — Profit & Average Cost</div>
+            <div class="q-text">Calculate Economica's profit from Oberland sales only. Then find average cost AC = (FC + MC×Q*) / Q*.</div>
+            <div class="input-row">
+              <span style="font-size:13px;color:var(--ink-dim)">Profit = $</span>
+              <input class="ans-input" id="in-1c-pi" type="number" placeholder="?">
+              <span style="font-size:13px;color:var(--ink-dim)">AC = $</span>
+              <input class="ans-input" id="in-1c-ac" type="number" placeholder="?">
+              <button class="check-btn" onclick="check1c()">Check</button>
+            </div>
+            <div class="fb hidden" id="fb-1c"></div>
+          </div>
+        </div>
+
+      </div>
+      <button class="continue-btn" id="btn-1" disabled onclick="goTo(2)">Your Export Director Calls → </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- ACT 2 — EXPORT DECISION -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card hidden" id="act2">
+  <div class="card-header">
+    <div class="act-badge gold">ACT 2</div>
+    <div class="card-title">The Export Proposal
+      <small>Your export director sees an opportunity in the Cocoland market</small>
+    </div>
+  </div>
+
+  <div class="narrative gold">
+    <span class="n-icon">📊</span>
+    <div class="n-tag">Message from your Export Director</div>
+    <h3>"We Can Sell AFCs Abroad at $15"</h3>
+    <p>Your export director enters with a proposal: <em>"There's strong demand for AFCs in the Cocoland market. However, several large firms in other countries also produce AFCs — so the Cocoland export market is effectively <strong>perfectly competitive</strong>. We are a price taker there. The going export price is <strong>$15 per unit</strong>, and we estimate we can sell <strong>20 units</strong> in that market."</em></p>
+    <p style="margin-top:8px">You glance at the numbers. The export price of $15 is well below your local price of $30. It's even below your average cost. Should you still export?</p>
+  </div>
+
+  <div class="setup-box">
+    <h3>Export Market Data</h3>
+    <div>
+      <span class="eq-block">Export price P = $15 (price taker)</span>
+      <span class="eq-block">Export quantity Q<sub>X</sub> = 20 units</span>
+      <span class="eq-block">MC = $10 (same as before)</span>
+    </div>
+  </div>
+
+  <div class="act-layout">
+    <div class="act-graph-col">
+      <div class="graph-container">
+        <svg id="svg-2" viewBox="0 0 500 340" width="100%"></svg>
+        <div class="legend" id="leg-2"></div>
+      </div>
+    </div>
+    <div class="act-q-col">
+      <p style="font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin-bottom:14px">Analyze the export decision:</p>
+      <div class="q-panel" id="qpanel-2">
+
+        <div class="q-block" id="qb-2a">
+          <div class="q-label">Step 1 of 3 — Is Exporting Worth It?</div>
+          <div class="q-text">Each exported unit earns P=$15 and costs MC=$10 to produce. What is the contribution margin (profit per extra unit exported)?</div>
+          <div class="input-row">
+            <span style="font-size:13px;color:var(--ink-dim)">P − MC = $</span>
+            <input class="ans-input" id="in-2a" type="number" placeholder="?">
+            <button class="check-btn" onclick="check2a()">Check</button>
+          </div>
+          <div class="fb hidden" id="fb-2a"></div>
+        </div>
+
+        <div class="hidden" id="qb-2b">
+          <div class="q-block">
+            <div class="q-label">Step 2 of 4 — Total Profit with Exports</div>
+            <div class="q-text">Calculate total profit when Economica sells Q*=40 locally at P*=$30 <em>and</em> Q<sub>X</sub>=20 units abroad at P=$15.
+              <br><span style="font-size:12px;color:var(--ink-dim);font-style:italic">Total Revenue − Total Variable Cost − Fixed Cost. FC is paid once regardless of total output.</span>
+            </div>
+            <div class="input-row">
+              <span style="font-size:13px;color:var(--ink-dim)">Total Profit = $</span>
+              <input class="ans-input" id="in-2b" type="number" placeholder="?">
+              <button class="check-btn" onclick="check2b()">Check</button>
+            </div>
+            <div class="fb hidden" id="fb-2b"></div>
+          </div>
+        </div>
+
+        <div class="hidden" id="qb-2c">
+          <div class="q-block">
+            <div class="q-label">Step 3 of 4 — New Average Cost</div>
+            <div class="q-text">With exports, Economica now produces Q<sub>total</sub> = 40 + 20 = 60 units. What is the new average cost per unit?
+              <br><span style="font-size:12px;color:var(--ink-dim);font-style:italic">AC = (FC + MC × Q<sub>total</sub>) / Q<sub>total</sub> = (800 + 10×60) / 60. Round to 2 decimal places.</span>
+            </div>
+            <div class="input-row">
+              <span style="font-size:13px;color:var(--ink-dim)">New AC = $</span>
+              <input class="ans-input" id="in-2c" type="number" step="0.01" placeholder="?">
+              <button class="check-btn" onclick="check2c()">Check</button>
+            </div>
+            <div class="fb hidden" id="fb-2c"></div>
+          </div>
+        </div>
+
+        <div class="hidden" id="qb-2d">
+          <div class="q-block">
+            <div class="q-label">Step 4 of 4 — The Decision</div>
+            <div class="q-text">AC fell from $30 to $23.33 thanks to exports spreading fixed costs over more units. The export price P=$15 is still below this new AC. But comparing profit with exports ($100) vs. without ($0) — should Economica export?</div>
+            <div class="input-row" style="gap:10px">
+              <button class="tf-btn" id="btn-2d-y" onclick="check2d('yes')" style="background:var(--teal-pale);color:var(--teal);border-color:var(--teal)">Yes, export</button>
+              <button class="tf-btn" id="btn-2d-n" onclick="check2d('no')" style="background:var(--red-pale);color:var(--red);border-color:var(--red-light)">No, don't export</button>
+            </div>
+            <div class="fb hidden" id="fb-2d"></div>
+          </div>
+        </div>
+
+      </div>
+      <button class="continue-btn" id="btn-2" disabled onclick="goTo(3)">Your Lawyer Calls → </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- ACT 3 — DUMPING CHECK -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card hidden" id="act3">
+  <div class="card-header">
+    <div class="act-badge red">ACT 3</div>
+    <div class="card-title">The Lawyer's Warning
+      <small>Cocoland market producers are filing a complaint</small>
+    </div>
+  </div>
+
+  <div class="narrative red">
+    <span class="n-icon">⚖️</span>
+    <div class="n-tag">Urgent — Legal Alert</div>
+    <h3>"We May Be Facing an Antidumping Investigation"</h3>
+    <p>Your phone rings. It's your legal team: <em>"Cocoland market producers have filed a complaint with their trade authority, claiming Economica is <strong>dumping</strong> AFCs into their market. Under WTO rules, dumping is defined in two ways — either the export price is below your domestic price, or it is below your average cost of production. If either test is satisfied, they can impose an <strong>antidumping duty</strong>."</em></p>
+    <p style="margin-top:8px">Your lawyer continues: <em>"We need to run both tests right now and calculate the <strong>dumping margin</strong> — that's what determines the maximum duty they can impose."</em></p>
+  </div>
+
+  <div class="setup-box">
+    <h3>The Two Dumping Tests (WTO Rules)</h3>
+    <p><strong>Test 1:</strong> Is the export price below the domestic price? &nbsp; P < P*?</p>
+    <p><strong>Test 2:</strong> Is the export price below the average cost of production? &nbsp; P < AC?</p>
+    <p style="margin-top:6px; font-size:12px; color:var(--ink-dim); font-style:italic">Only one test needs to be satisfied for a dumping finding. The dumping margin = P* − P (using Test 1).</p>
+    <div style="margin-top:10px">
+      <span class="eq-block">Export price P = $15</span>
+      <span class="eq-block">Domestic price P* = $30</span>
+      <span class="eq-block">AC (with exports) = $800 + $10×60) / 60 = $23.33</span>
+    </div>
+  </div>
+
+  <div class="act-layout">
+    <div class="act-graph-col">
+      <div class="graph-container">
+        <svg id="svg-3" viewBox="0 0 500 340" width="100%"></svg>
+        <div class="legend" id="leg-3"></div>
+      </div>
+    </div>
+    <div class="act-q-col">
+      <p style="font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin-bottom:14px">Run the dumping tests:</p>
+      <div class="q-panel" id="qpanel-3">
+
+        <div class="q-block" id="qb-3a">
+          <div class="q-label">Step 1 of 3 — Test 1: Price vs. Domestic Price</div>
+          <div class="q-text">Is Economica selling AFCs in the Cocoland market below its domestic price in Oberland?
+          </div>
+          <div class="input-row" style="gap:10px">
+            <button class="tf-btn" id="btn-3a-y" onclick="check3a('yes')" style="background:var(--teal-pale);color:var(--teal);border-color:var(--teal)">Yes — P &lt; P*</button>
+            <button class="tf-btn" id="btn-3a-n" onclick="check3a('no')" style="background:var(--red-pale);color:var(--red);border-color:var(--red-light)">No — P ≥ P*</button>
+          </div>
+          <div class="fb hidden" id="fb-3a"></div>
+        </div>
+
+        <div class="hidden" id="qb-3b">
+          <div class="q-block">
+            <div class="q-label">Step 2 of 3 — Test 2: Price vs. Average Cost</div>
+            <div class="q-text">Is Economica selling AFCs below its average cost of production (AC = $23.33)?</div>
+            <div class="input-row" style="gap:10px">
+              <button class="tf-btn" id="btn-3b-y" onclick="check3b('yes')" style="background:var(--teal-pale);color:var(--teal);border-color:var(--teal)">Yes — P &lt; AC</button>
+              <button class="tf-btn" id="btn-3b-n" onclick="check3b('no')" style="background:var(--red-pale);color:var(--red);border-color:var(--red-light)">No — P ≥ AC</button>
+            </div>
+            <div class="fb hidden" id="fb-3b"></div>
+          </div>
+        </div>
+
+        <div class="hidden" id="qb-3c">
+          <div class="q-block">
+            <div class="q-label">Step 3 of 3 — The Dumping Margin</div>
+            <div class="q-text">The dumping margin is the difference between Economica's domestic price and its export price. This is the maximum antidumping duty the Cocoland government can legally impose.</div>
+            <div class="input-row">
+              <span style="font-size:13px;color:var(--ink-dim)">Dumping margin = P* − P = $</span>
+              <input class="ans-input" id="in-3c" type="number" placeholder="?">
+              <button class="check-btn" onclick="check3c()">Check</button>
+            </div>
+            <div class="fb hidden" id="fb-3c"></div>
+          </div>
+        </div>
+
+      </div>
+      <button class="continue-btn" id="btn-3" disabled onclick="goTo(4)">The Cocoland Government Responds → </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- ACT 4 — ANTIDUMPING DUTY -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card hidden" id="act4">
+  <div class="card-header">
+    <div class="act-badge blue">ACT 4</div>
+    <div class="card-title">The Antidumping Duty
+      <small>Cocoland government imposes a duty equal to the dumping margin</small>
+    </div>
+  </div>
+
+  <div class="narrative blue">
+    <span class="n-icon">📋</span>
+    <div class="n-tag">Official Notice</div>
+    <h3>Cocoland Imposes an Antidumping Duty of $15</h3>
+    <p>The Cocoland government's trade authority rules in favor of the domestic producers. It imposes an <strong>antidumping duty of $15 per unit</strong> — exactly equal to the dumping margin — on all AFC imports from Economica. This means Economica must now pay $15 to the Cocoland government for every unit it exports there.</p>
+    <p style="margin-top:8px">Your lawyer is back: <em>"Under the duty, if we still want to sell at $15 in the Cocoland market, we only net $15 − $15 = $0 per unit after paying the duty. That's below our MC of $10. We need to figure out what to do."</em></p>
+  </div>
+
+  <div class="setup-box">
+    <h3>New Export Economics</h3>
+    <div>
+      <span class="eq-block">Antidumping duty t = $15/unit</span>
+      <span class="eq-block">Economica nets: P − t = $15 − $15 = $0/unit</span>
+      <span class="eq-block">MC = $10/unit</span>
+    </div>
+  </div>
+
+  <div class="act-layout">
+    <div class="act-graph-col">
+      <div class="graph-container">
+        <svg id="svg-4" viewBox="0 0 500 340" width="100%"></svg>
+        <div class="legend" id="leg-4"></div>
+      </div>
+    </div>
+    <div class="act-q-col">
+      <p style="font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin-bottom:14px">Analyze the impact of the duty:</p>
+      <div class="q-panel" id="qpanel-4">
+
+        <div class="q-block" id="qb-4a">
+          <div class="q-label">Step 1 of 3 — Net Revenue After Duty</div>
+          <div class="q-text">After paying the $15 duty, Economica nets $0 per unit exported. Compare this to MC = $10. Should Economica continue exporting?</div>
+          <div class="input-row" style="gap:10px">
+            <button class="tf-btn" id="btn-4a-y" onclick="check4a('yes')" style="background:var(--teal-pale);color:var(--teal);border-color:var(--teal)">Yes, keep exporting</button>
+            <button class="tf-btn" id="btn-4a-n" onclick="check4a('no')" style="background:var(--red-pale);color:var(--red);border-color:var(--red-light)">No, stop exporting</button>
+          </div>
+          <div class="fb hidden" id="fb-4a"></div>
+        </div>
+
+        <div class="hidden" id="qb-4b">
+          <div class="q-block">
+            <div class="q-label">Step 2 of 3 — Economica's Profit After Duty</div>
+            <div class="q-text">With exports stopped, Economica is back to selling only in Oberland: Q*=40, P*=$30. What is the profit now?
+              <br><span style="font-size:12px;color:var(--ink-dim);font-style:italic">Profit = P*×Q* − MC×Q* − FC</span>
+            </div>
+            <div class="input-row">
+              <span style="font-size:13px;color:var(--ink-dim)">Profit = $</span>
+              <input class="ans-input" id="in-4b" type="number" placeholder="?">
+              <button class="check-btn" onclick="check4b()">Check</button>
+            </div>
+            <div class="fb hidden" id="fb-4b"></div>
+          </div>
+        </div>
+
+        <div class="hidden" id="qb-4c">
+          <div class="q-block">
+            <div class="q-label">Step 3 of 3 — Who Actually Benefits?</div>
+            <div class="q-text">The antidumping duty eliminated the dumping and protected Cocoland producers. But was it good for <em>Cocoland consumers</em>?</div>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px" id="mc-4c">
+              <button class="mc-btn" onclick="check4c('A')">A) Yes — Cocoland consumers benefit because dumping is eliminated and prices are fair</button>
+              <button class="mc-btn" onclick="check4c('B')">B) No — Cocoland consumers were actually benefiting from low-priced imports. The duty raises prices for them, making them worse off</button>
+              <button class="mc-btn" onclick="check4c('C')">C) It depends on whether the Cocoland government uses the duty revenue to compensate consumers</button>
+            </div>
+            <div class="fb hidden" id="fb-4c"></div>
+          </div>
+        </div>
+
+      </div>
+      <button class="continue-btn" id="btn-4" disabled onclick="goTo(5)">See the Full Picture → </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- ACT 5 — VERDICT -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="card hidden" id="act5">
+  <div class="card-header">
+    <div class="act-badge">ACT 5</div>
+    <div class="card-title">The Full Picture
+      <small>Dumping is rational — but antidumping duties are a double-edged sword</small>
+    </div>
+  </div>
+
+  <table class="wtable">
+    <thead>
+      <tr><th>Scenario</th><th>Economica Profit</th><th>Exports to Cocoland</th><th>Cocoland Consumer Price</th><th>Cocoland Govt Revenue</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Oberland only (no export)</td><td>$0</td><td>0</td><td>—</td><td>—</td></tr>
+      <tr><td class="hi">With exports (dumping)</td><td class="pos">$100</td><td class="pos">20 units</td><td class="pos">$15 (cheap!)</td><td>$0</td></tr>
+      <tr><td class="neg">After antidumping duty</td><td>$0</td><td class="neg">0 units</td><td class="neg">No imports</td><td class="neg">$0 (no trade)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="summary-banner" style="margin-top:20px">
+    <h3>🎓 Key Takeaways</h3>
+    <p>
+      <strong style="color:var(--teal)">1. Why dumping happens:</strong> Fixed costs create a wedge between AC and MC. Once FC is covered by domestic sales, exporting at any price above MC adds profit — even if that price is far below AC. Economica exports at $15 because $15 > $10 = MC.<br><br>
+      <strong style="color:var(--gold)">2. Two tests, one finding:</strong> Under WTO rules, dumping is found if P < P* (domestic price) or P < AC. Both conditions are satisfied here ($15 < $30 and $15 < $23.33), so the antidumping duty is legally justified.<br><br>
+      <strong style="color:var(--red)">3. The antidumping paradox:</strong> Cocoland consumers were <em>benefiting</em> from cheap AFC imports at $15. The antidumping duty eliminated those imports entirely — protecting Cocoland producers but harming Cocoland consumers. Antidumping policy is not always welfare-improving for the importing country as a whole.<br><br>
+      <strong style="color:var(--blue)">4. Strategic use of antidumping:</strong> Because the WTO allows antidumping duties whenever the two tests are met, domestic firms often use these complaints as a <em>protectionist tool</em> — even when the foreign firm's pricing behavior is economically rational. This is why antidumping provisions are considered one of the most overused instruments in trade policy.
+    </p>
+  </div>
+
+  <div class="completion-box">
+    <h3>🎉 Simulation Complete!</h3>
+    <p>Enter your name and notify Professor Heo.</p>
+    <div style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap">
+      <input type="text" id="student-name" class="name-input" placeholder="Your full name">
+      <button class="email-btn" onclick="sendCompletion()">✉ Email Professor</button>
+    </div>
+    <div id="email-fb"></div>
+  </div>
+</div>
+
+</div><!-- /wrapper -->
+
+<script>
+// ══════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════
+const D = {
+  FC: 800, MC: 10,
+  Q_local: 40, P_local: 30,
+  Q_export: 20, P_export: 15,
+  AC_local: 30, AC_total: 800/60 + 10, // ≈23.33
+  profit_local: 0,
+  profit_total: 100,
+  dumping_margin: 15,
+  duty: 15,
+};
+
+// ══════════════════════════════════════════════════
+// GRAPH UTILITIES
+// ══════════════════════════════════════════════════
+function makeBase(svgId) {
+  const svg = document.getElementById(svgId);
+  if(!svg) return null;
+  svg.innerHTML='';
+  const W=500,H=340,pad={top:28,right:40,bottom:46,left:54};
+  const gW=W-pad.left-pad.right, gH=H-pad.top-pad.bottom;
+  const Pmax=60, Qmax=80;
+  const xS=q=>pad.left+(q/Qmax)*gW;
+  const yS=p=>pad.top+gH-(p/Pmax)*gH;
+
+  function el(tag,attrs,par) {
+    const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+    for(const[k,v] of Object.entries(attrs)) e.setAttribute(k,v);
+    (par||svg).appendChild(e); return e;
+  }
+  function line(x1,y1,x2,y2,stroke,sw,dash) {
+    return el('line',{x1,y1,x2,y2,stroke:stroke||'#666','stroke-width':sw||1.5,...(dash?{'stroke-dasharray':dash}:{})});
+  }
+  function txt(x,y,content,opts={}) {
+    const t=el('text',{x,y,'font-size':opts.sz||11,fill:opts.fill||'#6a8a7e',
+      'text-anchor':opts.anchor||'middle','font-family':"'DM Sans',sans-serif",
+      'font-weight':opts.bold?'600':'400'});
+    t.textContent=content; svg.appendChild(t); return t;
+  }
+  function poly(pts,fill,op) {
+    return el('polygon',{points:pts.map(p=>`${xS(p[0])},${yS(p[1])}`).join(' '),fill,opacity:op||0.4});
+  }
+  function anim(e) {
+    e.style.opacity='0'; e.style.transition='opacity 0.5s ease';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ e.style.opacity='1'; }));
+    return e;
+  }
+
+  // Graph background
+  el('rect',{x:pad.left,y:pad.top,width:gW,height:gH,fill:'#f8fbf9',rx:2});
+
+  // Axes
+  line(pad.left,pad.top,pad.left,pad.top+gH,'#b0c8be',1.5);
+  line(pad.left,pad.top+gH,pad.left+gW,pad.top+gH,'#b0c8be',1.5);
+
+  // Grid + ticks
+  [10,20,30,40,50,60].forEach(p=>{
+    line(pad.left,yS(p),pad.left+gW,yS(p),'#d4e0da',0.8,'4,3');
+    txt(pad.left-8,yS(p)+4,p,{anchor:'end',fill:'#6a8a7e'});
+  });
+  [0,20,40,60,80].forEach(q=>{
+    line(xS(q),pad.top,xS(q),pad.top+gH,'#d4e0da',0.8,'4,3');
+    txt(xS(q),pad.top+gH+16,q,{fill:'#6a8a7e'});
+  });
+
+  // Axis labels
+  txt(pad.left+gW/2,H-4,'Quantity (AFC units)',{sz:11,fill:'#0d7a5f',bold:true});
+  const pl=txt(14,pad.top+gH/2,'Price ($)',{sz:11,fill:'#0d7a5f',bold:true});
+  pl.setAttribute('transform',`rotate(-90,14,${pad.top+gH/2})`);
+
+  // MC line (horizontal at 10)
+  line(xS(0),yS(D.MC),xS(80),yS(D.MC),'#1a5a8a',1.8,'8,5');
+  txt(xS(76),yS(D.MC)-6,'MC',{sz:11,fill:'#1a5a8a',bold:true,anchor:'end'});
+
+  return {el,line,txt,poly,anim,xS,yS,svg,pad,gW,gH};
+}
+
+// ── ACT 1: Local monopoly graph ──
+function drawG1(lv) {
+  const c=makeBase('svg-1'); if(!c) return;
+  const {line,txt,poly,anim,xS,yS,el} = c;
+  const leg=document.getElementById('leg-1');
+  let html='<div class="legend-item"><div class="ls" style="background:#1a5a8a;opacity:0.7"></div>MC=$10</div>';
+
+  // Local demand: P*=50-Q/2, Q=0→50, Q=100→0 (capped at Q=80)
+  line(xS(0),yS(50),xS(80),yS(10),'#0d7a5f',2.5);
+  txt(xS(18),yS(43),'D*',{sz:13,fill:'#0d7a5f',bold:true,anchor:'start'});
+  html+='<div class="legend-item"><div class="ls" style="background:#0d7a5f"></div>Oberland Demand D*</div>';
+
+  // MR: MR*=50-Q, Q=0→50, Q=50→0
+  line(xS(0),yS(50),xS(50),yS(0),'#c08020',2,'6,3');
+  txt(xS(52),yS(2),'MR*',{sz:11,fill:'#c08020',bold:true,anchor:'start'});
+  html+='<div class="legend-item"><div class="ls" style="background:#c08020;opacity:0.7"></div>MR*</div>';
+
+  if(lv>=1) {
+    // Q*=40 vertical
+    anim(line(xS(D.Q_local),yS(D.P_local),xS(D.Q_local),yS(0),'#aaa',1,'3,3'));
+    anim(txt(xS(D.Q_local),yS(0)+16,'40',{sz:11,fill:'#0d7a5f',bold:true}));
+    const dotMR=el('circle',{cx:xS(D.Q_local),cy:yS(D.MC),r:4,fill:'#c08020',stroke:'#fff','stroke-width':1.5});
+    anim(dotMR);
+    anim(txt(xS(D.Q_local)+6,yS(D.MC)-7,'MR*=MC',{sz:9,fill:'#c08020',anchor:'start'}));
+  }
+  if(lv>=2) {
+    // P*=30 horizontal + dot on demand
+    anim(line(xS(0),yS(D.P_local),xS(D.Q_local),yS(D.P_local),'#0d7a5f',1.5,'4,3'));
+    anim(txt(xS(0)-8,yS(D.P_local)+4,'30',{sz:11,anchor:'end',fill:'#0d7a5f',bold:true}));
+    const dotA=el('circle',{cx:xS(D.Q_local),cy:yS(D.P_local),r:5,fill:'#0d7a5f',stroke:'#fff','stroke-width':1.5});
+    anim(dotA);
+    anim(txt(xS(D.Q_local)+6,yS(D.P_local)-8,'A (40, $30)',{sz:10,fill:'#0d7a5f',anchor:'start'}));
+  }
+  if(lv>=3) {
+    // Profit shading: rectangle between P* and AC=30 (profit=0 so just show PS area)
+    // AC line at 30 = P*, so profit=0 is a visual insight
+    anim(line(xS(0),yS(D.AC_local),xS(D.Q_local),yS(D.AC_local),'#b83020',1.5,'5,4'));
+    anim(txt(xS(2),yS(D.AC_local)-6,'AC=$30',{sz:10,fill:'#b83020',anchor:'start'}));
+    const insight=document.createElement('div');
+    insight.className='insight teal';
+    insight.innerHTML='<strong>Note:</strong> At Q*=40, the local price equals AC = $30 exactly. Profit = $0. Economica barely breaks even on domestic sales alone.';
+    c.svg.parentElement.after(insight);
+    html+='<div class="legend-item"><div class="ls" style="background:#b83020;opacity:0.6"></div>AC = $30</div>';
+  }
+  leg.innerHTML=html;
+}
+
+// ── ACT 2: Export decision graph ──
+function drawG2(lv) {
+  const c=makeBase('svg-2'); if(!c) return;
+  const {line,txt,poly,anim,xS,yS,el} = c;
+  const leg=document.getElementById('leg-2');
+  let html='<div class="legend-item"><div class="ls" style="background:#1a5a8a;opacity:0.7"></div>MC=$10</div>';
+
+  // Local demand (dimmed)
+  line(xS(0),yS(50),xS(80),yS(10),'#b0c8be',1.5);
+  txt(xS(18),yS(43),'D*',{sz:12,fill:'#b0c8be',anchor:'start'});
+  // Local MR (dimmed)
+  line(xS(0),yS(50),xS(50),yS(0),'#d4c090',1.2,'5,4');
+
+  // P* reference
+  line(xS(0),yS(D.P_local),xS(D.Q_local),yS(D.P_local),'#0d7a5f',1,'4,3');
+  txt(xS(0)-8,yS(D.P_local)+4,'30',{sz:10,anchor:'end',fill:'#0d7a5f'});
+  const dotA=el('circle',{cx:xS(D.Q_local),cy:yS(D.P_local),r:4,fill:'#0d7a5f',stroke:'#fff','stroke-width':1.5});
+
+  // Export price line: horizontal at P=15
+  line(xS(0),yS(D.P_export),xS(80),yS(D.P_export),'#c08020',2,'8,4');
+  txt(xS(76),yS(D.P_export)-6,'P=$15 (export)',{sz:10,fill:'#c08020',bold:true,anchor:'end'});
+  txt(xS(0)-8,yS(D.P_export)+4,'15',{sz:10,anchor:'end',fill:'#c08020'});
+  html+='<div class="legend-item"><div class="ls" style="background:#c08020;opacity:0.7"></div>Export price P=$15</div>';
+  html+='<div class="legend-item"><div class="ls" style="background:#0d7a5f;opacity:0.5"></div>Domestic P*=$30</div>';
+
+  if(lv>=1) {
+    // Contribution margin arrow: MC=10 to P=15
+    anim(line(xS(5),yS(D.MC),xS(5),yS(D.P_export),'#1a7a40',2));
+    anim(txt(xS(5)-10,yS((D.MC+D.P_export)/2),'$5',{sz:11,fill:'#1a7a40',bold:true,anchor:'end'}));
+    anim(txt(xS(8),yS(12.5),'P−MC',{sz:9,fill:'#1a7a40',anchor:'start'}));
+  }
+  if(lv>=2) {
+    // Export profit rectangle
+    anim(poly([[D.Q_local,D.MC],[D.Q_local,D.P_export],[D.Q_local+D.Q_export,D.P_export],[D.Q_local+D.Q_export,D.MC]],'#c08020',0.3));
+    anim(line(xS(D.Q_local+D.Q_export),yS(D.P_export),xS(D.Q_local+D.Q_export),yS(0),'#aaa',1,'3,3'));
+    anim(txt(xS(D.Q_local+D.Q_export),yS(0)+16,'60',{sz:11,fill:'#c08020',bold:true}));
+    anim(txt(xS(D.Q_local+D.Q_export/2),yS((D.MC+D.P_export)/2),'Export\nProfit',{sz:9,fill:'#7a4a00',bold:true}));
+    html+='<div class="legend-item"><div class="ls sq" style="background:#c08020;opacity:0.4"></div>Export profit ($100)</div>';
+  }
+  leg.innerHTML=html;
+}
+
+// ── ACT 3: Dumping diagram (Foreign discriminating monopoly style) ──
+function drawG3(lv) {
+  const c=makeBase('svg-3'); if(!c) return;
+  const {line,txt,poly,anim,xS,yS,el} = c;
+  const leg=document.getElementById('leg-3');
+  let html='<div class="legend-item"><div class="ls" style="background:#1a5a8a;opacity:0.7"></div>MC=$10</div>';
+
+  // Local demand
+  line(xS(0),yS(50),xS(80),yS(10),'#0d7a5f',2);
+  txt(xS(18),yS(43),'D* (Oberland)',{sz:11,fill:'#0d7a5f',bold:true,anchor:'start'});
+  // Local MR
+  line(xS(0),yS(50),xS(50),yS(0),'#c08020',1.5,'5,3');
+  txt(xS(52),yS(2),'MR*',{sz:10,fill:'#c08020',anchor:'start'});
+  html+='<div class="legend-item"><div class="ls" style="background:#0d7a5f"></div>D* Oberland</div>';
+  html+='<div class="legend-item"><div class="ls" style="background:#c08020;opacity:0.7"></div>MR*</div>';
+
+  // Export price (horizontal)
+  line(xS(0),yS(D.P_export),xS(80),yS(D.P_export),'#b83020',2,'7,4');
+  txt(xS(72),yS(D.P_export)-6,'P=$15 (export)',{sz:10,fill:'#b83020',bold:true,anchor:'end'});
+  txt(xS(0)-8,yS(D.P_export)+4,'15',{sz:10,anchor:'end',fill:'#b83020',bold:true});
+  html+='<div class="legend-item"><div class="ls" style="background:#b83020;opacity:0.7"></div>Export price P=$15</div>';
+
+  if(lv>=1) {
+    // P* reference
+    anim(line(xS(0),yS(D.P_local),xS(D.Q_local),yS(D.P_local),'#0d7a5f',1,'4,3'));
+    anim(txt(xS(0)-8,yS(D.P_local)+4,'30',{sz:10,anchor:'end',fill:'#0d7a5f',bold:true}));
+    // Dumping margin bracket — moved to Q=20 area, label at P=28
+    anim(line(xS(20),yS(D.P_export),xS(20),yS(D.P_local),'#b83020',2));
+    anim(line(xS(18),yS(D.P_export),xS(22),yS(D.P_export),'#b83020',1.5));
+    anim(line(xS(18),yS(D.P_local),xS(22),yS(D.P_local),'#b83020',1.5));
+    anim(txt(xS(20)+6,yS(28),'$15 margin',{sz:10,fill:'#b83020',bold:true,anchor:'start'}));
+  }
+  if(lv>=2) {
+    // AC line
+    const acVal = (D.FC + D.MC*(D.Q_local+D.Q_export))/(D.Q_local+D.Q_export);
+    anim(line(xS(0),yS(acVal),xS(60),yS(acVal),'#7a3060',1.8,'4,3'));
+    anim(txt(xS(60)+4,yS(acVal)+4,'AC=$23.33',{sz:9,fill:'#7a3060',anchor:'start'}));
+    anim(txt(xS(0)-8,yS(acVal)+4,'23',{sz:9,anchor:'end',fill:'#7a3060'}));
+    html+='<div class="legend-item"><div class="ls" style="background:#7a3060;opacity:0.7"></div>AC=$23.33 (with exports)</div>';
+  }
+  leg.innerHTML=html;
+}
+
+// ── ACT 4: After duty ──
+function drawG4(lv) {
+  const c=makeBase('svg-4'); if(!c) return;
+  const {line,txt,poly,anim,xS,yS,el} = c;
+  const leg=document.getElementById('leg-4');
+  let html='<div class="legend-item"><div class="ls" style="background:#1a5a8a;opacity:0.7"></div>MC=$10</div>';
+
+  // Local demand
+  line(xS(0),yS(50),xS(80),yS(10),'#0d7a5f',2);
+  txt(xS(18),yS(43),'D*',{sz:12,fill:'#0d7a5f',bold:true,anchor:'start'});
+  line(xS(0),yS(50),xS(50),yS(0),'#c08020',1.5,'5,3');
+  txt(xS(52),yS(2),'MR*',{sz:10,fill:'#c08020',anchor:'start'});
+
+  // Export price (strikethrough effect — dimmed)
+  line(xS(0),yS(D.P_export),xS(80),yS(D.P_export),'#d4e0da',1.5,'5,5');
+  txt(xS(72),yS(D.P_export)-6,'P=$15 (blocked)',{sz:9,fill:'#b0c8be',anchor:'end'});
+
+  // Duty: MC+duty bar at 10+0=0 net (shows why exports stop)
+  anim(line(xS(0),yS(0),xS(80),yS(0),'#b83020',1.5,'4,4'));
+
+  // P* reference
+  line(xS(0),yS(D.P_local),xS(D.Q_local),yS(D.P_local),'#0d7a5f',1,'4,3');
+  txt(xS(0)-8,yS(D.P_local)+4,'30',{sz:10,anchor:'end',fill:'#0d7a5f',bold:true});
+  html+='<div class="legend-item"><div class="ls" style="background:#0d7a5f"></div>Back to Oberland only: P*=$30, Q*=40</div>';
+
+  if(lv>=1) {
+    // Shade profit = 0 (P*=AC=30 at Q=40)
+    anim(line(xS(D.Q_local),yS(D.P_local),xS(D.Q_local),yS(0),'#aaa',1,'3,3'));
+    anim(txt(xS(D.Q_local),yS(0)+16,'40',{sz:11,fill:'#0d7a5f',bold:true}));
+    const dotA=el('circle',{cx:xS(D.Q_local),cy:yS(D.P_local),r:5,fill:'#0d7a5f',stroke:'#fff','stroke-width':1.5});
+    anim(dotA);
+    anim(txt(xS(D.Q_local)+6,yS(D.P_local)-8,'Q*=40, P*=$30',{sz:9,fill:'#0d7a5f',anchor:'start'}));
+  }
+  leg.innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════
+// QUESTION HELPERS
+// ══════════════════════════════════════════════════
+function showFB(id,type,msg) {
+  const e=document.getElementById(id);
+  e.className='fb '+type; e.innerHTML=msg; e.classList.remove('hidden');
+}
+function markInputsOK(inputIds) {
+  (inputIds||[]).forEach(id=>{ const e=document.getElementById(id); if(e){e.classList.add('ok');e.readOnly=true;} });
+}
+function advanceStep(panelId, doneId, summaryHTML, nextId) {
+  const doneEl = document.getElementById(doneId);
+  if(!doneEl) return;
+  const done = document.createElement('div');
+  done.className = 'step-done';
+  done.innerHTML = `<span class="sd-check">✓</span><span class="sd-ans">${summaryHTML}</span>`;
+  doneEl.replaceWith(done);
+  if(nextId) {
+    const next = document.getElementById(nextId);
+    if(next) next.classList.remove('hidden');
+  }
+}
+
+// Show "Ready to proceed" button after the current step block
+// doneId = the element to eventually replace (either bare q-block or hidden wrapper)
+function showReadyBtn(fbId, panelId, doneId, summaryHTML, nextId, doneFn) {
+  // Remove any existing ready button
+  const existing = document.getElementById('ready-btn-' + doneId);
+  if(existing) existing.remove();
+  const btn = document.createElement('button');
+  btn.className = 'ready-btn';
+  btn.id = 'ready-btn-' + doneId;
+  btn.textContent = 'Ready to proceed →';
+  btn.onclick = () => {
+    btn.remove();
+    advanceStep(panelId, doneId, summaryHTML, nextId);
+    if(doneFn) doneFn();
+  };
+  // Insert after the doneEl so it sits below the current step
+  const doneEl = document.getElementById(doneId);
+  doneEl.after(btn);
+}
+
+// ══════════════════════════════════════════════════
+// ACT 1 CHECKS
+// ══════════════════════════════════════════════════
+let a1=[false,false,false], att1=[0,0,0];
+function checkDone1() {
+  if(a1.every(Boolean)) { document.getElementById('btn-1').disabled=false; drawG1(3); }
+}
+function check1a() {
+  const v=parseFloat(document.getElementById('in-1a').value); att1[0]++;
+  if(v===40) {
+    markInputsOK(['in-1a']);
+    showFB('fb-1a','ok','✓ Q*=40. From MR*=MC: 50−Q=10 → Q=40. As the sole AFC producer in Oberland, Economica restricts output to maximize profit.');
+    a1[0]=true; drawG1(1);
+    showReadyBtn('fb-1a','qpanel-1','qb-1a','Step 1 — Profit-Maximizing Output &nbsp; Q* = 40','qb-1b', checkDone1);
+  }
+  else if(att1[0]===1) showFB('fb-1a','hint','Hint: Set MR*=MC → 50−Q=10. Solve for Q.');
+  else showFB('fb-1a','bad','50−Q=10 → Q=40.');
+}
+function check1b() {
+  const v=parseFloat(document.getElementById('in-1b').value); att1[1]++;
+  if(v===30) {
+    markInputsOK(['in-1b']);
+    showFB('fb-1b','ok','✓ P*=$30. From P*=50−Q/2=50−20=$30. Economica sells at $30 — three times its MC of $10.');
+    a1[1]=true; drawG1(2);
+    showReadyBtn('fb-1b','qpanel-1','qb-1b','Step 2 — Monopoly Price &nbsp; P* = $30','qb-1c', checkDone1);
+  }
+  else if(att1[1]===1) showFB('fb-1b','hint','Hint: P*=50−Q*/2=50−40/2.');
+  else showFB('fb-1b','bad','P*=50−20=$30.');
+}
+function check1c() {
+  const pi=parseFloat(document.getElementById('in-1c-pi').value);
+  const ac=parseFloat(document.getElementById('in-1c-ac').value); att1[2]++;
+  if(pi===0 && ac===30) {
+    markInputsOK(['in-1c-pi','in-1c-ac']);
+    showFB('fb-1c','ok','✓ Profit=$0, AC=$30. Revenue=$1,200. Variable cost=$400. FC=$800. Profit=$0. Economica barely breaks even — the huge R&D fixed cost is the problem. This sets up the export story perfectly.');
+    a1[2]=true;
+    showReadyBtn('fb-1c','qpanel-1','qb-1c','Step 3 — Profit & AC &nbsp; Profit=$0 &nbsp;|&nbsp; AC=$30',null, checkDone1);
+  }
+  else if(att1[2]===1) showFB('fb-1c','hint','Hint: Profit=P*×Q*−MC×Q*−FC=(30×40)−(10×40)−800. AC=(FC+MC×Q*)/Q*=(800+400)/40.');
+  else {
+    let m='';
+    if(pi!==0) m+='Profit=1,200−400−800=$0. ';
+    if(ac!==30) m+='AC=(800+400)/40=$30.';
+    showFB('fb-1c','bad',m);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ACT 2 CHECKS
+// ══════════════════════════════════════════════════
+let a2=[false,false,false,false], att2=[0,0,0,0];
+function checkDone2() {
+  if(a2.every(Boolean)) document.getElementById('btn-2').disabled=false;
+}
+function check2a() {
+  const v=parseFloat(document.getElementById('in-2a').value); att2[0]++;
+  if(v===5) {
+    markInputsOK(['in-2a']);
+    showFB('fb-2a','ok','✓ P−MC=$5 per unit. Every unit exported adds $5 to profit. Fixed costs are already covered by Oberland sales — so any export price above MC is worth taking.');
+    a2[0]=true; drawG2(1);
+    showReadyBtn('fb-2a','qpanel-2','qb-2a','Step 1 — Contribution Margin &nbsp; P − MC = $5/unit','qb-2b', checkDone2);
+  }
+  else if(att2[0]===1) showFB('fb-2a','hint','Hint: $15 − $10 = ?');
+  else showFB('fb-2a','bad','P−MC = 15−10 = $5.');
+}
+function check2b() {
+  const v=parseFloat(document.getElementById('in-2b').value); att2[1]++;
+  if(v===100) {
+    markInputsOK(['in-2b']);
+    showFB('fb-2b','ok','✓ Total profit=$100. Revenue: 30×40 + 15×20=$1,200+$300=$1,500. Variable cost: 10×60=$600. FC=$800. Profit=$100. Up from $0!');
+    a2[1]=true; drawG2(2);
+    showReadyBtn('fb-2b','qpanel-2','qb-2b','Step 2 — Total Profit with Exports &nbsp; $100','qb-2c', checkDone2);
+  }
+  else if(att2[1]===1) showFB('fb-2b','hint','Hint: (30×40 + 15×20) − 10×60 − 800.');
+  else showFB('fb-2b','bad','(1,200+300)−600−800=$100.');
+}
+function check2c() {
+  const v=parseFloat(parseFloat(document.getElementById('in-2c').value).toFixed(2)); att2[2]++;
+  if(v===23.33) {
+    markInputsOK(['in-2c']);
+    showFB('fb-2c','ok','✓ New AC=$23.33. The fixed cost is now spread over 60 units instead of 40, so AC drops from $30 to $23.33. The export price P=$15 is still below this AC — but that\'s okay, because P > MC. This is why the dumping tests in Act 3 will both be satisfied.');
+    a2[2]=true;
+    showReadyBtn('fb-2c','qpanel-2','qb-2c','Step 3 — New Average Cost &nbsp; AC = $23.33','qb-2d', checkDone2);
+  }
+  else if(att2[2]===1) showFB('fb-2c','hint','Hint: AC = (800 + 10×60) / 60 = 1,400 / 60. Round to 2 decimal places.');
+  else showFB('fb-2c','bad','AC = (800 + 600) / 60 = 1,400 / 60 = $23.33.');
+}
+function check2d(ans) {
+  document.getElementById('btn-2d-y').disabled=true;
+  document.getElementById('btn-2d-n').disabled=true;
+  if(ans==='yes') {
+    document.getElementById('btn-2d-y').style.background='var(--teal)';
+    document.getElementById('btn-2d-y').style.color='#fff';
+    showFB('fb-2d','ok','✓ Yes! Even though P=$15 < AC=$23.33, Economica should export because P=$15 > MC=$10. Every extra unit adds $5 to profit. Fixed costs are sunk — the only question is whether P > MC.');
+    a2[3]=true;
+    showReadyBtn('fb-2d','qpanel-2','qb-2d','Step 4 — Export Decision &nbsp; Yes — P > MC, so export',null, checkDone2);
+  } else {
+    document.getElementById('btn-2d-n').style.background='var(--red)';
+    document.getElementById('btn-2d-n').style.color='#fff';
+    showFB('fb-2d','bad','Incorrect. Even though P < AC, exporting is profitable because P=$15 > MC=$10. FC is already paid regardless — every extra unit above MC adds to profit.');
+    setTimeout(()=>{ document.getElementById('btn-2d-y').disabled=false; document.getElementById('btn-2d-n').disabled=false; },1500);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ACT 3 CHECKS
+// ══════════════════════════════════════════════════
+let a3=[false,false,false], att3=[0,0,0];
+function checkDone3() {
+  if(a3.every(Boolean)) document.getElementById('btn-3').disabled=false;
+}
+function check3a(ans) {
+  document.getElementById('btn-3a-y').disabled=true;
+  document.getElementById('btn-3a-n').disabled=true;
+  if(ans==='yes') {
+    document.getElementById('btn-3a-y').style.background='var(--teal)';
+    document.getElementById('btn-3a-y').style.color='#fff';
+    showFB('fb-3a','ok','✓ Yes — P=$15 < P*=$30. Test 1 satisfied. Economica charges Oberland customers twice what it charges Cocoland customers. This is the price discrimination at the heart of dumping.');
+    a3[0]=true; drawG3(1);
+    showReadyBtn('fb-3a','qpanel-3','qb-3a','Test 1 &nbsp; P=$15 &lt; P*=$30 ✓ Dumping found','qb-3b', checkDone3);
+  } else {
+    document.getElementById('btn-3a-n').style.background='var(--red)';
+    document.getElementById('btn-3a-n').style.color='#fff';
+    showFB('fb-3a','bad','$15 < $30 — export price IS below domestic price. Test 1 is satisfied.');
+    setTimeout(()=>{ document.getElementById('btn-3a-y').disabled=false; document.getElementById('btn-3a-n').disabled=false; },1500);
+  }
+}
+function check3b(ans) {
+  document.getElementById('btn-3b-y').disabled=true;
+  document.getElementById('btn-3b-n').disabled=true;
+  if(ans==='yes') {
+    document.getElementById('btn-3b-y').style.background='var(--teal)';
+    document.getElementById('btn-3b-y').style.color='#fff';
+    showFB('fb-3b','ok','✓ Yes — P=$15 < AC=$23.33. Test 2 also satisfied. Both definitions of dumping are met. But remember: this is economically rational for Economica because P > MC.');
+    a3[1]=true; drawG3(2);
+    showReadyBtn('fb-3b','qpanel-3','qb-3b','Test 2 &nbsp; P=$15 &lt; AC=$23.33 ✓ Dumping found','qb-3c', checkDone3);
+  } else {
+    document.getElementById('btn-3b-n').style.background='var(--red)';
+    document.getElementById('btn-3b-n').style.color='#fff';
+    showFB('fb-3b','bad','$15 < $23.33 — export price IS below average cost. Test 2 is satisfied.');
+    setTimeout(()=>{ document.getElementById('btn-3b-y').disabled=false; document.getElementById('btn-3b-n').disabled=false; },1500);
+  }
+}
+function check3c() {
+  const v=parseFloat(document.getElementById('in-3c').value); att3[2]++;
+  if(v===15) {
+    markInputsOK(['in-3c']);
+    showFB('fb-3c','ok','✓ Dumping margin = $15. The Cocoland government can impose up to $15/unit as an antidumping duty. This is exactly the price gap between what Oberland customers pay ($30) and what Cocoland consumers pay ($15).');
+    a3[2]=true;
+    showReadyBtn('fb-3c','qpanel-3','qb-3c','Dumping Margin &nbsp; P* − P = $30 − $15 = $15',null, checkDone3);
+  }
+  else if(att3[2]===1) showFB('fb-3c','hint','Hint: Dumping margin = domestic price − export price = 30 − 15.');
+  else showFB('fb-3c','bad','30 − 15 = $15.');
+}
+
+// ══════════════════════════════════════════════════
+// ACT 4 CHECKS
+// ══════════════════════════════════════════════════
+let a4=[false,false,false], att4=[0,0,0];
+function checkDone4() {
+  if(a4.every(Boolean)) document.getElementById('btn-4').disabled=false;
+}
+function check4a(ans) {
+  document.getElementById('btn-4a-y').disabled=true;
+  document.getElementById('btn-4a-n').disabled=true;
+  if(ans==='no') {
+    document.getElementById('btn-4a-n').style.background='var(--teal)';
+    document.getElementById('btn-4a-n').style.color='#fff';
+    showFB('fb-4a','ok','✓ Stop exporting. Net revenue after duty = $0 < MC = $10. Economica loses $10 per unit if it exports. The duty has completely eliminated the profit incentive to export.');
+    a4[0]=true; drawG4(0);
+    showReadyBtn('fb-4a','qpanel-4','qb-4a','Step 1 — Stop Exporting &nbsp; Net $0 < MC $10 → exports cease','qb-4b', checkDone4);
+  } else {
+    document.getElementById('btn-4a-y').style.background='var(--red)';
+    document.getElementById('btn-4a-y').style.color='#fff';
+    showFB('fb-4a','bad','Net = $15 − duty $15 = $0 per unit, but MC = $10. Each unit exported loses $10. Economica should stop.');
+    setTimeout(()=>{ document.getElementById('btn-4a-y').disabled=false; document.getElementById('btn-4a-n').disabled=false; },1500);
+  }
+}
+function check4b() {
+  const v=parseFloat(document.getElementById('in-4b').value); att4[1]++;
+  if(v===0) {
+    markInputsOK(['in-4b']);
+    showFB('fb-4b','ok','✓ Profit=$0. Back to square one: 30×40−10×40−800=$0. The antidumping duty eliminated exports entirely and sent Economica back to break-even. The $100 export profit is gone.');
+    a4[1]=true; drawG4(1);
+    showReadyBtn('fb-4b','qpanel-4','qb-4b','Step 2 — Profit After Duty &nbsp; Back to $0','qb-4c', checkDone4);
+  }
+  else if(att4[1]===1) showFB('fb-4b','hint','Hint: 30×40 − 10×40 − 800 = ?');
+  else showFB('fb-4b','bad','1,200−400−800=$0.');
+}
+function check4c(ans) {
+  document.querySelectorAll('#mc-4c button').forEach(b=>b.disabled=true);
+  if(ans==='B') {
+    document.querySelectorAll('#mc-4c button')[1].style.background='var(--teal)';
+    document.querySelectorAll('#mc-4c button')[1].style.color='#fff';
+    showFB('fb-4c','ok','✓ Correct! Cocoland consumers were benefiting from cheap AFC imports at $15. The antidumping duty eliminated those imports entirely, so Cocoland consumers lose access to low-cost clean energy. Antidumping duties protect domestic producers but harm domestic consumers — the welfare effect is ambiguous at best.');
+    a4[2]=true;
+    showReadyBtn('fb-4c','qpanel-4','qb-4c','Step 3 — Who Benefits? &nbsp; Producers yes, consumers no',null, checkDone4);
+  } else {
+    const idx={'A':0,'C':2}[ans];
+    document.querySelectorAll('#mc-4c button')[idx].style.background='var(--red)';
+    document.querySelectorAll('#mc-4c button')[idx].style.color='#fff';
+    const msgs={
+      A:'Not quite — Cocoland consumers were getting AFCs at $15. The duty eliminates imports, raising prices for them.',
+      C:'Not quite — the duty eliminated exports entirely, so there is no duty revenue to redistribute.'
+    };
+    showFB('fb-4c','bad',msgs[ans]);
+    setTimeout(()=>document.querySelectorAll('#mc-4c button').forEach(b=>b.disabled=false),1500);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════
+function goTo(n) {
+  const ids={2:'act2',3:'act3',4:'act4',5:'act5'};
+  const progs={2:'prog-2',3:'prog-3',4:'prog-4'};
+  document.getElementById(ids[n]).classList.remove('hidden');
+  for(let i=1;i<n;i++) {
+    const p=document.getElementById('prog-'+i);
+    if(p){p.classList.remove('active');p.classList.add('done');}
+  }
+  if(progs[n]) { const cp=document.getElementById(progs[n]); if(cp) cp.classList.add('active'); }
+  if(n===2) drawG2(0);
+  if(n===3) drawG3(0);
+  document.getElementById(ids[n]).scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function sendCompletion() {
+  const name=document.getElementById('student-name').value.trim();
+  const fb=document.getElementById('email-fb');
+  if(!name){fb.textContent='Please enter your name first.';fb.style.color='var(--red)';return;}
+  const sub=encodeURIComponent('Dumping Game Completed');
+  const body=encodeURIComponent(`${name} has completed the Economica AFC Dumping Simulation!\n\nCourse: ECON 326 — International Trade\nGame: Algae Fuel Cell Dumping & Antidumping Policy (CH8)`);
+  window.location.href=`mailto:jheo1@oberlin.edu?subject=${sub}&body=${body}`;
+  fb.textContent=`Opening email client for ${name}...`;
+  fb.style.color='var(--green)';
+}
+
+window.addEventListener('load', ()=>{ drawG1(0); });
+</script>
+</body>
+</html>
