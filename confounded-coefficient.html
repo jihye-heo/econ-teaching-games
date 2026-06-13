@@ -82,6 +82,15 @@
   .toggle{display:inline-flex;border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;margin:10px 0}
   .toggle button{border:none;border-radius:0;margin:0}
   .toggle button.on{background:var(--ink);color:#fff}
+  /* guided walkthrough */
+  .walkbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:12px 0 4px}
+  .chapters{display:inline-flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:13.5px;font-weight:600;border:1.5px solid var(--line);color:var(--muted);
+    background:var(--card);border-radius:999px;padding:7px 13px;cursor:pointer;transition:all .15s}
+  .chip:hover{border-color:var(--ink);color:var(--ink);background:var(--card)}
+  .chip.on,.chip.on:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .walkcap{min-height:54px;color:#39455A;font-size:15.5px;max-width:680px;margin:8px 0 0;
+    border-left:3px solid var(--line);padding-left:14px}
 
   /* feedback */
   .feedback{display:none;border-left:4px solid var(--gold);background:#FBF6EA;
@@ -341,12 +350,20 @@
         <tbody id="cmpBody"></tbody>
       </table></div>
       <div class="feedback teal show" id="fbFlip"></div>
-      <div class="toggle" role="group" aria-label="View toggle">
-        <button id="tg3d" class="on">Rotatable 3-D plane</button>
-        <button id="tgFacet">Within age bands (2-D)</button>
-      </div>
+      <p style="margin-top:14px">Here is the same data in three dimensions. Rather than rotate it
+      yourself, watch the guided walkthrough — it shows exactly why ignoring age points the slope the
+      wrong way, and how slicing to one age fixes it.</p>
       <div id="chart2" class="chart chart-tall"></div>
-      <p class="readout" id="facetNote" style="color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:14px"></p>
+      <div class="walkbar">
+        <button class="primary" id="walkPlay">▶ Play walkthrough</button>
+        <div class="chapters" id="walkChapters">
+          <button class="chip on" data-ch="0">1 · It’s 3-D</button>
+          <button class="chip" data-ch="1">2 · Ignore age</button>
+          <button class="chip" data-ch="2">3 · Fix age (slice)</button>
+          <button class="chip" data-ch="3">4 · Every age</button>
+        </div>
+      </div>
+      <p class="walkcap" id="walkCap"></p>
     </div>
   </div>
   </div>
@@ -360,11 +377,11 @@
   <p>The sign flip you just saw is the dramatic special case, not the rule. What governs the damage
   is <b>how strongly the omitted variable moves with the regressor</b>. Below, the same 300 people are
   re-simulated in worlds that differ only in corr(exercise, age); in each world we run the
-  <i>simple</i> regression and record its β̂₁. The true β₁ is −1.0 everywhere.</p>
+  <i>simple</i> regression and record its β̂₁. The true β₁ is −2.0 everywhere.</p>
 
   <div class="card">
     <div class="tablewrap"><table class="reg">
-      <caption>Simple-regression β̂₁ across worlds · true β₁ = −1.0 in every row</caption>
+      <caption>Simple-regression β̂₁ across worlds · true β₁ = −2.0 in every row</caption>
       <thead><tr><th>corr(exercise, age)</th><th>simple β̂₁</th><th>error (β̂₁ − β₁)</th><th>verdict</th></tr></thead>
       <tbody id="corrBody"></tbody>
     </table></div>
@@ -391,10 +408,10 @@
     two 45-year-olds: vary exercise, hold age fixed. Multiple regression just does that comparison
     at every age simultaneously — a plane instead of a pooled line.</li>
     <li><b>A regression slope is not a causal effect until you defend exogeneity.</b> The simple
-    model’s β̂₁ = +3.2 was estimated perfectly precisely — and answered a different question:
+    model’s β̂₁ = +2.3 was estimated perfectly precisely — and answered a different question:
     “how does BP differ across people who exercise differently <i>and</i> are older?”</li>
   </ol>
-  <footer>Simulated data · true model: BP = 88 − 1.0·exercise + 0.9·age + N(0, 8²) · OLS computed live in your browser</footer>
+  <footer>Simulated data · true model: BP = 88 − 2.0·exercise + 1.0·age + N(0, 5²) · OLS computed live in your browser</footer>
 </section>
 
 </div>
@@ -403,7 +420,7 @@
 "use strict";
 /* ============ constants (verified offline) ============ */
 const N=300, SD_EX=2.2, SD_AGE=50/Math.sqrt(12);
-const B0=88, B1=-1.0, B2=0.9, SD_EPS=8, C_DEFAULT=0.75, SEED=20260610;
+const B0=88, B1=-2.0, B2=1.0, SD_EPS=5, C_DEFAULT=0.65, SEED=20260610;
 
 const COL={ink:'#1A2433',muted:'#6B7689',naive:'#C83F58',ctrl:'#0B7A78',
   grid:'#E3E6EC',gold:'#B98A2E',ages:['#A9C2EC','#5B7FC7','#1E3A6E']};
@@ -643,7 +660,7 @@ function drawBands(div){
 }
 
 /* ============ STEP 5 · multiple regression ============ */
-let view3d=true, multiRun=false;
+let multiRun=false;
 document.getElementById('runMulti').addEventListener('click',()=>{
   if(multiRun)return; multiRun=true;
   document.getElementById('runMulti').disabled=true;
@@ -652,60 +669,130 @@ document.getElementById('runMulti').addEventListener('click',()=>{
     '<tr><td>exercise</td>'+
     '<td>'+cell(FIT1.b1,FIT1.se1,'num-rose')+' <span class="pill rose">p '+fmtP(pTwo(FIT1.t1))+'</span></td>'+
     '<td>'+cell(FIT2.b1,FIT2.se1,'num-teal')+' <span class="pill teal">p '+fmtP(pTwo(FIT2.t1))+'</span></td>'+
-    '<td class="num-teal">\u03b2\u2081 = \u22121.0</td></tr>'+
+    '<td class="num-teal">\u03b2\u2081 = \u22122.0</td></tr>'+
     '<tr><td>age</td><td style="color:'+COL.muted+'">\u2014</td>'+
-    '<td>'+cell(FIT2.b2,FIT2.se2)+'</td><td>\u03b2\u2082 = 0.9</td></tr>'+
+    '<td>'+cell(FIT2.b2,FIT2.se2)+'</td><td>\u03b2\u2082 = 1.0</td></tr>'+
     '<tr><td>constant</td><td>'+cell(FIT1.b0,FIT1.se0)+'</td>'+
     '<td>'+cell(FIT2.b0,FIT2.se0)+'</td><td>\u03b2\u2080 = 88</td></tr>';
   document.getElementById('fbFlip').innerHTML=
     '<b>The coefficient flipped: '+f2(FIT1.b1)+' \u2192 '+f2(FIT2.b1)+'.</b> Same 300 people, same outcome \u2014 '+
     'the only change is that age moved out of u and into the model. Holding age fixed, an extra weekly hour '+
     'of exercise is associated with about '+Math.abs(FIT2.b1).toFixed(1)+' mmHg <i>lower</i> BP, and the truth '+
-    'is \u22121.0: the estimate now lands where it should, off only by sampling noise. \u03b2\u0302\u2082 = '+
-    f2(FIT2.b2)+' similarly recovers the true 0.9.';
+    'is \u22122.0: the estimate now lands where it should, off only by sampling noise. \u03b2\u0302\u2082 = '+
+    f2(FIT2.b2)+' similarly recovers the true 1.0.';
   const o=document.getElementById('multiOut');
   o.classList.remove('hide'); o.classList.add('reveal');
   document.getElementById('titleFlip').classList.add('flipped');
-  draw3D(); buildCorrTable(); unlock(6);
+  initWalk(); buildCorrTable(); unlock(6);
 });
 
-document.getElementById('tg3d').addEventListener('click',()=>{if(!view3d){view3d=true;swapToggle();draw3D()}});
-document.getElementById('tgFacet').addEventListener('click',()=>{if(view3d){view3d=false;swapToggle();
-  document.getElementById('facetNote').textContent=
-    'The 2-D shadow of the plane: within each age band the fitted relationship slopes down.';
-  drawBands('chart2')}});
-function swapToggle(){document.getElementById('tg3d').classList.toggle('on',view3d);
-  document.getElementById('tgFacet').classList.toggle('on',!view3d)}
+/* ---- guided 3-D walkthrough: establish → ignore age → slice → every slice ---- */
+const meanAgeAll=mean(D.age);
+const bpLo=Math.min(...D.bp), bpHi=Math.max(...D.bp);
+const ALL_IDX=D.ex.map((_,i)=>i);
+const SLICE={lo:41.7,hi:58.3,c:50,lab:'age 42\u201358'};
+const inBand=i=>D.age[i]>=SLICE.lo&&D.age[i]<SLICE.hi;
+const BAND_IDX=ALL_IDX.filter(inBand), REST_IDX=ALL_IDX.filter(i=>!inBand(i));
+const CAM_A={x:2.0,y:-1.15,z:0.55};      // oblique establishing
+const CAM_B={x:1.0,y:-2.0,z:0.72};       // gentle parallax
+const CAM_FACE={x:0.02,y:-2.65,z:0.12};  // look down the age axis: exercise→right, BP→up
+const SCENE3D={
+  xaxis:{title:'exercise (h/wk)',gridcolor:COL.grid,backgroundcolor:'rgba(0,0,0,0)'},
+  yaxis:{title:'age (years)',gridcolor:COL.grid,backgroundcolor:'rgba(0,0,0,0)'},
+  zaxis:{title:'BP (mmHg)',gridcolor:COL.grid,backgroundcolor:'rgba(0,0,0,0)'},
+  aspectmode:'cube'};
+const reduceMotion=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-function draw3D(){
-  document.getElementById('facetNote').textContent=
-    'Drag to rotate. The tilt of the plane along the exercise axis is \u03b2\u0302\u2081 = '+f2(FIT2.b1)+
-    ' \u2014 rotate until age points away from you and the downward slope appears.';
-  const pts={type:'scatter3d',mode:'markers',x:D.ex,y:D.age,z:D.bp,
-    marker:{size:3,color:D.age,colorscale:AGE_SCALE,opacity:0.75},
-    hovertemplate:'%{x:.1f} h/wk \u00b7 age %{y:.0f} \u00b7 %{z:.0f} mmHg<extra></extra>'};
-  const gx=[],gy=[];const ageMin=25,ageMax=75;
-  for(let i=0;i<=10;i++){gx.push(exMin+(exMax-exMin)*i/10);gy.push(ageMin+(ageMax-ageMin)*i/10)}
-  const gz=gy.map(a=>gx.map(x=>FIT2.b0+FIT2.b1*x+FIT2.b2*a));
-  const plane={type:'surface',x:gx,y:gy,z:gz,opacity:0.45,showscale:false,
-    colorscale:[[0,'#0B7A78'],[1,'#0B7A78']],hoverinfo:'skip'};
-  Plotly.newPlot('chart2',[pts,plane],{
-    font:FONT,paper_bgcolor:'rgba(0,0,0,0)',margin:{l:0,r:0,t:10,b:0},showlegend:false,
-    scene:{xaxis:{title:'exercise (h/wk)',gridcolor:COL.grid,backgroundcolor:'rgba(0,0,0,0)'},
-      yaxis:{title:'age (years)',gridcolor:COL.grid,backgroundcolor:'rgba(0,0,0,0)'},
-      zaxis:{title:'BP (mmHg)',gridcolor:COL.grid,backgroundcolor:'rgba(0,0,0,0)'},
-      camera:{eye:{x:1.7,y:-1.7,z:0.5}},aspectmode:'cube'}},PCONF);
+function ptsTrace(idx,opacity,size){return{type:'scatter3d',mode:'markers',
+  x:idx.map(i=>D.ex[i]),y:idx.map(i=>D.age[i]),z:idx.map(i=>D.bp[i]),
+  marker:{size:size||3,opacity:opacity,color:idx.map(i=>D.age[i]),colorscale:AGE_SCALE},
+  hovertemplate:'%{x:.1f} h/wk \u00b7 age %{y:.0f} \u00b7 %{z:.0f} mmHg<extra></extra>'}}
+function line3D(fit,yPos,color,width,xr){const r=xr||[exMin,exMax];
+  return{type:'scatter3d',mode:'lines',x:r,y:[yPos,yPos],z:r.map(x=>fit.b0+fit.b1*x),
+    line:{color,width:width||6},hoverinfo:'skip'}}
+function slab(yPos,color){return{type:'mesh3d',
+  x:[exMin,exMax,exMax,exMin],y:[yPos,yPos,yPos,yPos],z:[bpLo,bpLo,bpHi,bpHi],
+  i:[0,0],j:[1,2],k:[2,3],color,opacity:0.13,flatshading:true,hoverinfo:'skip'}}
+
+let plotReady=false, curEye={...CAM_A}, camTok=0;
+function layout3D(withCam){const l={font:FONT,paper_bgcolor:'rgba(0,0,0,0)',
+  margin:{l:0,r:0,t:0,b:0},showlegend:false,
+  scene:Object.assign({uirevision:'keep'},SCENE3D)};
+  if(withCam)l.scene.camera={eye:curEye};return l}
+function render(traces){
+  if(!plotReady){Plotly.newPlot('chart2',traces,layout3D(true),PCONF);plotReady=true;}
+  else Plotly.react('chart2',traces,layout3D(false),PCONF);   // uirevision keeps camera
 }
+function tweenCam(target,dur){
+  const tok=++camTok, start={...curEye}, t0=performance.now();
+  if(reduceMotion()||!dur){curEye={...target};Plotly.relayout('chart2',{'scene.camera.eye':target});return;}
+  (function frame(now){if(tok!==camTok)return;
+    let p=Math.min(1,(now-t0)/dur);const e=p<0.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+    curEye={x:start.x+(target.x-start.x)*e,y:start.y+(target.y-start.y)*e,z:start.z+(target.z-start.z)*e};
+    Plotly.relayout('chart2',{'scene.camera.eye':curEye});
+    if(p<1)requestAnimationFrame(frame);})(t0);
+}
+function setChip(n){document.querySelectorAll('#walkChapters .chip').forEach(c=>
+  c.classList.toggle('on',+c.dataset.ch===n))}
+function cap(t){document.getElementById('walkCap').textContent=t}
+
+function chap0(go){setChip(0);
+  render([ptsTrace(ALL_IDX,0.85,3)]);
+  cap('300 people, three measurements each \u2014 exercise, age, blood pressure. Each dot is one person floating in that 3-D space. Drag any time to look around.');
+  if(go){tweenCam(CAM_A,0);setTimeout(()=>tweenCam(CAM_B,2400),60);}else tweenCam(CAM_B,700);}
+function chap1(go){setChip(1);
+  render([ptsTrace(ALL_IDX,0.85,3),line3D(FIT1,meanAgeAll,COL.naive,8)]);
+  cap('Rotate until age points straight into the screen \u2014 that is literally "ignoring age." Now you see only exercise (\u2192) vs BP (\u2191), and the cloud tilts UP. This rose line is the simple regression: +'+FIT1.b1.toFixed(1)+' mmHg per hour.');
+  tweenCam(CAM_FACE,go?1900:800);}
+function chap2(go){setChip(2);
+  const bf=ols1(BAND_IDX.map(i=>D.ex[i]),BAND_IDX.map(i=>D.bp[i]));
+  const bxr=[Math.min(...BAND_IDX.map(i=>D.ex[i])),Math.max(...BAND_IDX.map(i=>D.ex[i]))];
+  render([ptsTrace(REST_IDX,0.05,3),ptsTrace(BAND_IDX,0.95,4),slab(SLICE.c,COL.ctrl),
+    line3D(FIT1,meanAgeAll,'rgba(200,63,88,0.30)',4),line3D(bf,SLICE.c,COL.ctrl,9,bxr)]);
+  cap('Now slice the cube at one age ('+SLICE.lab+') and keep only those people \u2014 same axes, same camera. Within a single age the teal line slopes DOWN ('+bf.b1.toFixed(1)+'): more exercise, lower BP. That is the real effect the rose line hid.');
+  tweenCam(CAM_FACE,go?700:400);}
+function chap3(go){setChip(3);
+  const bands=[{lo:25,hi:41.7,c:33},{lo:41.7,hi:58.3,c:50},{lo:58.3,hi:75.01,c:67}];
+  const tr=[ptsTrace(ALL_IDX,0.45,3),line3D(FIT1,meanAgeAll,COL.naive,8)];
+  bands.forEach(b=>{const idx=ALL_IDX.filter(i=>D.age[i]>=b.lo&&D.age[i]<b.hi);
+    const f=ols1(idx.map(i=>D.ex[i]),idx.map(i=>D.bp[i]));
+    tr.push(line3D(f,b.c,COL.ctrl,7,[Math.min(...idx.map(i=>D.ex[i])),Math.max(...idx.map(i=>D.ex[i]))]));});
+  render(tr);
+  cap('It is not a fluke of one slice: every age group slopes DOWN (teal). Only the line that pools all ages \u2014 ignoring age \u2014 slopes UP (rose). "Controlling for age" means comparing within slices, and that is exactly what \u03b2\u0302\u2081 from the multiple regression reports.');
+  tweenCam(CAM_FACE,go?700:400);}
+
+const CHAPS=[chap0,chap1,chap2,chap3];
+let playing=false, playTimers=[];
+function stopPlay(){playTimers.forEach(clearTimeout);playTimers=[];playing=false;
+  document.getElementById('walkPlay').textContent='\u25b6 Play walkthrough';}
+function play(){
+  if(playing){stopPlay();return;}
+  playing=true;document.getElementById('walkPlay').textContent='\u23f9 Stop';
+  chap0(true);
+  playTimers.push(setTimeout(()=>chap1(true),3200));
+  playTimers.push(setTimeout(()=>chap2(true),6800));
+  playTimers.push(setTimeout(()=>chap3(true),10800));
+  playTimers.push(setTimeout(stopPlay,14000));
+}
+function initWalk(){
+  plotReady=false;curEye={...CAM_A};stopPlay();
+  chap0(false);
+}
+document.getElementById('walkPlay').addEventListener('click',play);
+document.getElementById('walkChapters').addEventListener('click',ev=>{
+  const b=ev.target.closest('.chip');if(!b)return;
+  stopPlay();CHAPS[+b.dataset.ch](false);
+});
 
 /* ============ STEP 6 · correlation table + question ============ */
 function buildCorrTable(){
-  const cs=[0,0.15,0.30,0.50,0.75,0.90];
+  const cs=[0,0.15,0.30,0.50,0.65,0.90];
   let html='';
   cs.forEach(c=>{
     const s=buildSample(base0,c);
     const f=ols1(s.ex,s.bp);
     const err=f.b1-B1;
-    const verdict=Math.abs(err)<0.5?'<span class="pill teal">\u2248 fine</span>':
+    const verdict=Math.abs(err)<0.75?'<span class="pill teal">\u2248 fine</span>':
       (f.b1<0?'<span class="pill" style="background:#B98A2E;color:#fff">attenuated</span>':
         '<span class="pill rose">sign flipped</span>');
     const isHome=Math.abs(c-C_DEFAULT)<1e-9;
@@ -715,9 +802,9 @@ function buildCorrTable(){
   document.getElementById('corrBody').innerHTML=html;
 }
 const BIAS_FB={
-  up:{cls:'teal',txt:'<b>Grows \u2014 and now you know why.</b> The omitted-variable-bias formula says the simple regression\u2019s slope equals \u03b2\u0302\u2081 + \u03b2\u0302\u2082\u00b7\u03b4\u0302: the controlled estimate plus a bias term, where \u03b4\u0302 is the slope of age on exercise. Stronger corr(exercise, age) \u21d2 bigger \u03b4\u0302 \u21d2 bigger bias term, with \u03b2\u0302\u2082 \u2248 0.9 as the multiplier. Read the table bottom-up: at corr = 0 the \u201cwrong\u201d model is nearly right (\u03b4\u0302 \u2248 0, omitting age is harmless); by 0.30 the sign has already flipped; at 0.90 the estimate is five units off. The danger of omitting a variable is not that it exists \u2014 it is how tightly it tracks the regressor you kept.'},
-  down:{cls:'rose',txt:'Look down the error column again \u2014 +0.36, +1.2, +2.0, +3.0, +4.2, +5.0. The estimate drifts <i>further</i> from \u22121.0 as the correlation tightens.'},
-  same:{cls:'rose',txt:'The error column says otherwise: it climbs steadily from +0.36 at corr = 0 to about +5 at corr = 0.90. The correlation is doing the damage \u2014 trace the column once more.'}};
+  up:{cls:'teal',txt:'<b>Grows \u2014 and now you know why.</b> The omitted-variable-bias formula says the simple regression\u2019s slope equals \u03b2\u0302\u2081 + \u03b2\u0302\u2082\u00b7\u03b4\u0302: the controlled estimate plus a bias term, where \u03b4\u0302 is the slope of age on exercise. Stronger corr(exercise, age) \u21d2 bigger \u03b4\u0302 \u21d2 bigger bias term, with \u03b2\u0302\u2082 \u2248 1.0 as the multiplier. Read the table bottom-up: at corr = 0 the \u201cwrong\u201d model is nearly right (\u03b4\u0302 \u2248 0, omitting age is harmless); by 0.30 the sign has already flipped; by 0.90 it is more than five units off. The danger of omitting a variable is not that it exists \u2014 it is how tightly it tracks the regressor you kept.'},
+  down:{cls:'rose',txt:'Look down the error column again \u2014 it climbs steadily, from about +0.5 at corr 0 to nearly +6 at corr 0.90. The estimate drifts <i>further</i> from \u22122.0 as the correlation tightens.'},
+  same:{cls:'rose',txt:'The error column says otherwise: it climbs steadily from about +0.5 at corr 0 to nearly +6 at corr 0.90. The correlation is doing the damage \u2014 trace the column once more.'}};
 document.getElementById('biasRow').addEventListener('click',ev=>{
   const btn=ev.target.closest('button.choice'); if(!btn)return;
   const k=btn.dataset.bias, fb=document.getElementById('fb6');
