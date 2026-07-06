@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unbiasedness and consistency</title>
+<style>
+  :root{
+    --paper:#FBFAF8; --ink:#181C24; --muted:#5B6470;
+    --line:rgba(24,28,36,.12); --line-strong:rgba(24,28,36,.22);
+    --truth:#0E7A5F; --est:#3A57A7; --biasclr:#B23A3A;
+    --serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+    --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --mono:'SF Mono','IBM Plex Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+       line-height:1.7;font-size:17px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px;margin:0 auto;padding:64px 24px 80px}
+  .eyebrow{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+           margin:0 0 14px;font-weight:500}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(2.1rem,5.5vw,2.9rem);
+     line-height:1.08;margin:0 0 18px;letter-spacing:-.01em}
+  .lede{font-size:1.16rem;color:#2A303C;margin:0 0 20px}
+  .lede .m{font-family:var(--mono);font-size:.9em;background:rgba(58,87,167,.08);
+           padding:1px 5px;border-radius:4px;color:var(--est)}
+  h2{font-family:var(--serif);font-weight:600;font-size:1.5rem;margin:8px 0 12px}
+  p{margin:0 0 18px}
+  .sect-tag{font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+            color:var(--truth);margin:56px 0 6px}
+  .defn{border:1px solid var(--line);border-left:3px solid var(--truth);
+        background:#fff;border-radius:8px;padding:20px 24px;margin:0 0 14px}
+  .defn .formula{font-family:var(--mono);font-size:1.35rem;color:var(--ink);margin:0 0 8px}
+  .defn .formula .ar{color:var(--truth)}
+  .defn p{font-size:.96rem;color:var(--muted);margin:0}
+  .panel{border:1px solid var(--line);border-radius:12px;background:#fff;padding:24px;margin:28px 0 16px}
+  .controls{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;margin-bottom:20px}
+  .ctl{display:flex;align-items:center;gap:12px;flex:1 1 240px}
+  .ctl label{font-size:14px;color:var(--muted);white-space:nowrap}
+  .ctl output{font-family:var(--mono);font-size:15px;font-weight:500;min-width:46px;text-align:right}
+  input[type=range]{flex:1;height:22px;accent-color:var(--est);cursor:pointer}
+  .cases{display:flex;flex-wrap:wrap;gap:8px}
+  button{font-family:var(--sans);font-size:13.5px;font-weight:500;color:var(--ink);
+         background:#fff;border:1px solid var(--line-strong);border-radius:8px;
+         padding:8px 14px;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+  button:hover{background:#F2F1ED;border-color:var(--ink)}
+  button:active{transform:translateY(1px)}
+  .case-btn.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .nfixed{font-family:var(--mono);font-size:13px;color:var(--muted);
+          border:1px dashed var(--line-strong);border-radius:6px;padding:6px 10px;white-space:nowrap}
+  :focus-visible{outline:2px solid var(--est);outline-offset:2px}
+  .canvas-wrap{position:relative;width:100%}
+  canvas{display:block;width:100%;height:auto}
+  .stats{display:flex;flex-wrap:wrap;gap:16px;margin-top:18px;align-items:flex-end}
+  .stat{flex:1 1 110px}
+  .stat .k{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+  .stat .v{font-family:var(--mono);font-size:1.02rem;font-weight:500}
+  .stat.big{flex:1 1 190px}
+  .stat.big .k{color:var(--truth)}
+  .stat.big .v{font-size:1.9rem;color:var(--truth);line-height:1.1}
+  .pill{display:inline-block;font-size:12.5px;font-weight:600;padding:3px 11px;border-radius:999px;letter-spacing:.02em}
+  .pill.ok{background:rgba(14,122,95,.13);color:var(--truth)}
+  .pill.no{background:rgba(178,58,58,.13);color:var(--biasclr)}
+  .caption{font-size:14px;color:var(--muted);margin:14px 0 0;line-height:1.6}
+  .caption .t{color:var(--truth);font-weight:500}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:var(--muted);margin-top:14px}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .swatch{width:16px;height:3px;border-radius:2px;display:inline-block}
+  .matrix{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:6px 0 18px}
+  .cell{border:1px solid var(--line);border-radius:8px;padding:14px 16px;background:#fff}
+  .cell .lab{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin:0 0 5px}
+  .cell.uc .lab{color:var(--truth)} .cell.ui .lab,.cell.bc .lab{color:#8A6D1E} .cell.bi .lab{color:var(--biasclr)}
+  .cell h4{margin:0 0 3px;font-size:14.5px;font-family:var(--sans);font-weight:600}
+  .cell p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+  footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+  @media (max-width:520px){.matrix{grid-template-columns:1fr}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Econometrics · properties of an estimator</p>
+  <h1>Unbiasedness and consistency</h1>
+  <p class="lede">Two different questions we ask of an estimator <span class="m">β̂</span>. Is it centered on the truth? And does it close in on the truth as data accumulates? The first is <strong>unbiasedness</strong>; the second is <strong>consistency</strong> — and they are not the same thing.</p>
+
+  <p class="sect-tag">Property 01</p>
+  <h2>Unbiasedness</h2>
+  <div class="defn">
+    <p class="formula">E[β̂] <span class="ar">=</span> β</p>
+    <p>At a <em>fixed</em> sample size, the estimator is right on average: the center of its sampling distribution sits exactly on β. This says nothing about how far any single estimate might land from β.</p>
+  </div>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="cases" id="cases">
+        <button class="case-btn active" data-case="mean" type="button">Sample mean</button>
+        <button class="case-btn" data-case="perfect" type="button">Perfect</button>
+        <button class="case-btn" data-case="ping" type="button">±1 ping-pong</button>
+        <button class="case-btn" data-case="biased" type="button">Biased (contrast)</button>
+      </div>
+      <span class="nfixed">sample size fixed · n = 30</span>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="hist1" role="img" aria-label="Histogram of 2000 estimates at a fixed sample size, showing whether the estimator is centered on the true value of beta.">Sampling distribution of the chosen estimator at a fixed sample size.</canvas>
+    </div>
+    <div class="legend">
+      <span><span class="swatch" style="background:#0E7A5F"></span>true β = 2</span>
+      <span><span class="swatch" style="background:#3A57A7"></span>average of β̂</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">average of β̂</div><div class="v" id="avg1">2.00</div></div>
+      <div class="stat"><div class="k">bias = avg − β</div><div class="v" id="bias1">0.00</div></div>
+      <div class="stat big"><div class="k">verdict</div><div class="v"><span class="pill ok" id="verdict1">Unbiased</span></div></div>
+    </div>
+    <p class="caption" id="cap1"></p>
+  </div>
+
+  <p>Unbiasedness is a statement about a <strong>fixed sample size</strong> — here, n = 30. Look at the ±1 ping-pong estimator: it is unbiased at <em>every</em> sample size, because the +1 and −1 errors cancel on average, yet no single estimate is ever close to β. Being right on average is not the same as being close — which is exactly what the next property fixes.</p>
+
+  <p class="sect-tag">Property 02</p>
+  <h2>Consistency</h2>
+  <p>Unbiasedness pins the sample size down. Consistency asks what happens as the sample size grows without bound. <strong>As the sample size n grows</strong>, a consistent estimator's whole sampling distribution collapses onto β — the estimates don't just average to the truth, they crowd around it and stay there.</p>
+  <div class="defn">
+    <p class="formula">β̂ <span class="ar">&#8594;<sub style="font-size:.6em">p</sub></span> β &nbsp;&nbsp;as&nbsp; n &#8594; &#8734;</p>
+    <p>Pick any tolerance you like. <strong>As the sample size n grows</strong>, the probability that β̂ falls within that tolerance of β rises toward 1. Bigger samples don't just shrink the error on average — they make sizeable errors vanishingly unlikely.</p>
+  </div>
+
+  <div class="panel">
+    <div class="controls">
+      <div class="ctl">
+        <label for="n">sample size n</label>
+        <input type="range" id="n" min="0" max="8" step="1" value="0" aria-describedby="nval">
+        <output id="nval">5</output>
+      </div>
+      <button id="redraw" type="button">Draw new samples</button>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="hist2" role="img" aria-label="Histogram of 2000 estimates of beta. As the sample size n increases, the spread of the estimates collapses onto the true value of 2.">Histogram showing estimates of β concentrating on the true value as n grows.</canvas>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="k">standard error σ/&#8730;n</div><div class="v" id="se">0.447</div></div>
+      <div class="stat"><div class="k">samples drawn</div><div class="v">2,000</div></div>
+      <div class="stat big"><div class="k">P( |β̂ − β| &lt; 0.10 )</div><div class="v" id="prob">17%</div></div>
+    </div>
+    <p class="caption">The dashed line is the true <span class="t">β = 2</span>; the shaded band is a tolerance of <span class="t">±0.10</span>. Drag n toward infinity and watch the estimates pile into the band.</p>
+  </div>
+
+  <h2>Putting them together</h2>
+  <p>The two properties are independent — an estimator can have either, both, or neither. The engine behind consistency is the <strong>law of large numbers</strong>: sample averages converge to population means, and estimators built from averages (the sample mean, OLS under standard assumptions) inherit that behaviour.</p>
+
+  <div class="matrix">
+    <div class="cell uc"><p class="lab">Unbiased · Consistent</p><h4>Sample mean, OLS</h4><p>Centered on β and collapsing onto it. The ideal case.</p></div>
+    <div class="cell ui"><p class="lab">Unbiased · Inconsistent</p><h4>The ±1 ping-pong</h4><p>Right on average, but the spread never shrinks.</p></div>
+    <div class="cell bc"><p class="lab">Biased · Consistent</p><h4>Small-sample bias that fades</h4><p>Off-center for small n, but the bias vanishes as n → ∞.</p></div>
+    <div class="cell bi"><p class="lab">Biased · Inconsistent</p><h4>OLS under omitted-variable bias</h4><p>Off-center and staying there, no matter how much data.</p></div>
+  </div>
+
+  <p>In applied econometrics, consistency is usually the minimum we insist on — it is the formal reason that "collect more data" is sound advice rather than wishful thinking, and why omitted-variable bias is so damaging: more data cannot save an inconsistent estimator.</p>
+
+  <footer>An interactive note for introductory econometrics. β = 2, σ = 1; estimates are drawn over 2,000 replications.</footer>
+</div>
+
+<script>
+(function(){
+  var BETA=2, SIGMA=1, M=2000;
+  function gauss(){ var u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random();
+    return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+  function fontOf(){ return getComputedStyle(document.body).fontFamily; }
+  function setup(canvas,cssH){
+    var w=canvas.parentNode.clientWidth, dpr=window.devicePixelRatio||1;
+    canvas.width=Math.round(w*dpr); canvas.height=Math.round(cssH*dpr); canvas.style.height=cssH+'px';
+    var ctx=canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0);
+    return {ctx:ctx,w:w,h:cssH};
+  }
+  function histo(vals,lo,hi,bins){
+    var b=new Array(bins).fill(0);
+    for(var i=0;i<vals.length;i++){ var k=Math.floor((vals[i]-lo)/(hi-lo)*bins); if(k>=0&&k<bins)b[k]++; }
+    return b;
+  }
+  function axisLabels(ctx,W,H,pB,lo,hi){
+    ctx.fillStyle='#5B6470'; ctx.font='12px '+fontOf(); ctx.textBaseline='top';
+    ctx.textAlign='left';  ctx.fillText(lo.toFixed(1),4,H-pB+8);
+    ctx.textAlign='right'; ctx.fillText(hi.toFixed(1),W-4,H-pB+8);
+  }
+
+  /* ---------- Property 1: unbiasedness ---------- */
+  var N0=30, LO1=BETA-1.6, HI1=BETA+1.6, B1=64;
+  var CASES={
+    mean:   {gen:function(){var s=0;for(var i=0;i<N0;i++)s+=BETA+SIGMA*gauss();return s/N0;},
+             note:'The sample mean. Estimates scatter around β but average out to it exactly — unbiased.'},
+    perfect:{gen:function(){return BETA;},
+             note:'A degenerate ideal: every estimate is exactly β. Unbiased, with no spread at all.'},
+    ping:   {gen:function(){return BETA+(Math.random()<0.5?-1:1);},
+             note:'Every estimate is a full unit off — yet +1 and −1 cancel, so it is unbiased. Unbiased does not mean close, and this one never gets closer with more data.'},
+    biased: {gen:function(){var s=0;for(var i=0;i<N0;i++)s+=BETA+SIGMA*gauss();return s/N0+0.6;},
+             note:'The whole distribution sits to the right of β — on average it misses. This one is biased (shown for contrast).'}
+  };
+  var curCase='mean';
+  function drawUnbiased(){
+    var cfg=CASES[curCase], vals=[], sum=0;
+    for(var m=0;m<M;m++){ var e=cfg.gen(); vals.push(e); sum+=e; }
+    var avg=sum/M, bias=avg-BETA;
+    var d=setup(document.getElementById('hist1'),290), ctx=d.ctx, W=d.w, H=d.h, pT=14, pB=34;
+    var X=function(v){ return 4+((v-LO1)/(HI1-LO1))*(W-8); };
+    var bins=histo(vals,LO1,HI1,B1), maxc=Math.max.apply(null,bins)||1, bw=(W-8)/B1;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='rgba(58,87,167,.72)';
+    for(var i=0;i<B1;i++){ if(!bins[i])continue; var h=(bins[i]/maxc)*(H-pT-pB); ctx.fillRect(4+i*bw+0.5,(H-pB)-h,bw-1,h); }
+    ctx.strokeStyle='rgba(24,28,36,.25)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(4,H-pB+0.5);ctx.lineTo(W-4,H-pB+0.5);ctx.stroke();
+    // average-of-beta-hat marker (indigo, solid)
+    ctx.strokeStyle='#3A57A7';ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(X(avg),pT);ctx.lineTo(X(avg),H-pB);ctx.stroke();
+    // true beta (teal, dashed) drawn on top
+    ctx.strokeStyle='#0E7A5F';ctx.lineWidth=2;ctx.setLineDash([6,5]);
+    ctx.beginPath();ctx.moveTo(X(BETA),pT);ctx.lineTo(X(BETA),H-pB);ctx.stroke();ctx.setLineDash([]);
+    axisLabels(ctx,W,H,pB,LO1,HI1);
+    document.getElementById('avg1').textContent=avg.toFixed(2);
+    document.getElementById('bias1').textContent=(bias>=0?'+':'')+bias.toFixed(2);
+    var v=document.getElementById('verdict1'), unb=Math.abs(bias)<0.06;
+    v.textContent=unb?'Unbiased':'Biased'; v.className='pill '+(unb?'ok':'no');
+    document.getElementById('cap1').textContent=cfg.note;
+  }
+  document.getElementById('cases').addEventListener('click',function(e){
+    var btn=e.target.closest('.case-btn'); if(!btn)return;
+    document.querySelectorAll('.case-btn').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active'); curCase=btn.dataset.case; drawUnbiased();
+  });
+
+  /* ---------- Property 2: consistency ---------- */
+  var NS=[5,10,25,50,100,250,500,1000,2500], EPS=0.10, LO2=BETA-1.5, HI2=BETA+1.5, B2=60;
+  var slider=document.getElementById('n');
+  function drawConsistency(){
+    var n=NS[+slider.value]; document.getElementById('nval').textContent=n.toLocaleString();
+    var vals=[], within=0;
+    for(var m=0;m<M;m++){ var s=0; for(var i=0;i<n;i++) s+=BETA+SIGMA*gauss(); var e=s/n;
+      vals.push(e); if(Math.abs(e-BETA)<EPS) within++; }
+    var d=setup(document.getElementById('hist2'),300), ctx=d.ctx, W=d.w, H=d.h, pT=14, pB=34;
+    var X=function(v){ return 4+((v-LO2)/(HI2-LO2))*(W-8); };
+    var bins=histo(vals,LO2,HI2,B2), maxc=Math.max.apply(null,bins)||1, bw=(W-8)/B2;
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='rgba(14,122,95,.10)';
+    ctx.fillRect(X(BETA-EPS),pT,X(BETA+EPS)-X(BETA-EPS),H-pT-pB);
+    ctx.fillStyle='rgba(58,87,167,.78)';
+    for(var i=0;i<B2;i++){ if(!bins[i])continue; var h=(bins[i]/maxc)*(H-pT-pB); ctx.fillRect(4+i*bw+0.5,(H-pB)-h,bw-1,h); }
+    ctx.strokeStyle='rgba(24,28,36,.25)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(4,H-pB+0.5);ctx.lineTo(W-4,H-pB+0.5);ctx.stroke();
+    ctx.strokeStyle='#0E7A5F';ctx.lineWidth=2;ctx.setLineDash([6,5]);
+    ctx.beginPath();ctx.moveTo(X(BETA),pT);ctx.lineTo(X(BETA),H-pB);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#5B6470';ctx.font='12px '+fontOf();ctx.textBaseline='top';
+    ctx.textAlign='left';ctx.fillText(LO2.toFixed(1),4,H-pB+8);
+    ctx.textAlign='center';ctx.fillStyle='#0E7A5F';ctx.fillText('β = '+BETA,X(BETA),H-pB+8);
+    ctx.textAlign='right';ctx.fillStyle='#5B6470';ctx.fillText(HI2.toFixed(1),W-4,H-pB+8);
+    document.getElementById('se').textContent=(SIGMA/Math.sqrt(n)).toFixed(3);
+    document.getElementById('prob').textContent=Math.round(within/M*100)+'%';
+  }
+  slider.addEventListener('input',drawConsistency);
+  document.getElementById('redraw').addEventListener('click',drawConsistency);
+
+  var rt; window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(function(){drawUnbiased();drawConsistency();},120);});
+  drawUnbiased(); drawConsistency();
+})();
+</script>
+</body>
+</html>
